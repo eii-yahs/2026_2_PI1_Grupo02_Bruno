@@ -45,13 +45,18 @@ A prioridade de cada item é definida pela classificação MoSCoW:
 
 **Estruturas**
 
-| **ID** | **Nome do Requisito** | **Descrição** | **Prioridade** | **Responsáveis** | **Link Github Projects** |
-|:------:|------------------------|---------------|:--------------:|------------------|--------------------------|
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
+| **ID** | **Nome do Requisito**                         | **Descrição**                                                                                                                                                                                                                                        | **Prioridade** | **Responsáveis** | **Link Github Projects** |
+| :----: | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------: | ---------------- | ------------------------ |
+|   RF7  | Deslocamento livre no labirinto               | A estrutura do Rato Cego deve permitir que o micromouse percorra os corredores do labirinto sem interferências com as paredes ou demais elementos do percurso, mantendo espaço adequado para a movimentação dos componentes de locomoção e sensores. |      Must      | -                | -                        |
+|   RF8  | Proteção dos componentes internos             | A estrutura deve proteger os componentes eletrônicos, sensores, motores e demais módulos internos contra choques mecânicos e possíveis danos decorrentes da movimentação ou de eventuais colisões durante a execução dos percursos.                  |      Must      | -                | -                        |
+|   RF9  | Acesso aos componentes internos               | A estrutura deve permitir o acesso aos componentes internos para inspeção, manutenção, substituição e realização de ajustes, sem exigir a desmontagem completa do chassi.                                                                            |     Should     | -                | -                        |
+|  RF10  | Fixação dos subsistemas                       | A estrutura deve possuir pontos de fixação adequados para acomodar e manter posicionados os componentes dos subsistemas de Hardware, Energia e Software embarcado, evitando deslocamentos durante a movimentação do micromouse.                      |      Must      | -                | -                        |
+|  RF11  | Modularidade estrutural                       | A estrutura deve permitir a substituição ou atualização de módulos e componentes de forma independente, possibilitando alterações no protótipo sem a necessidade de reconstrução completa do chassi.                                                 |     Should     | -                | -                        |
+|  RF12  | Fixação e alinhamento do sistema de locomoção | A estrutura deve possuir pontos de fixação para motores, rodas e demais elementos do sistema de locomoção, mantendo seu posicionamento e alinhamento durante a execução dos percursos.                                                               |      Must      | -                | -                        |
+|  RF13  | Acomodação e posicionamento dos sensores      | A estrutura deve possuir espaços e pontos de fixação adequados para a instalação dos sensores nas posições definidas pelo projeto, permitindo que permaneçam orientados e desobstruídos durante o percurso.                                          |      Must      | -                | -                        |
+|  RF14  | Organização e proteção do cabeamento          | A estrutura deve disponibilizar meios para organizar e proteger os cabos e conexões internas, evitando que interfiram na movimentação das rodas, motores, sensores ou demais componentes durante a operação.                                         |      Must      | -                | -                        |
+|  RF15  | Acesso aos elementos de operação              | A estrutura deve permitir o acesso externo aos elementos necessários para operação, manutenção e preparação do micromouse, como chave de alimentação, conectores e demais interfaces definidas pelos subsistemas.                                    |     Should     | -                | -                        |
+
 
 **Software**
 
@@ -92,13 +97,24 @@ A prioridade de cada item é definida pela classificação MoSCoW:
 
 **Estruturas**
 
-| **ID** | **Nome do Requisito** | **Descrição** | **Prioridade** | **Responsáveis** | **Link Github Projects** |
-|:------:|------------------------|---------------|:--------------:|------------------|--------------------------|
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
+| **ID** | **Nome do Requisito**                         | **Descrição**                                                                                                                                                                                                                              | **Prioridade** | **Responsáveis** | **Link Github Projects** |
+| :----: | --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | :------------: | ---------------- | ------------------------ |
+|  RNF11 | Limite dimensional do chassi                  | O conjunto estrutural do Rato Cego deve respeitar o limite máximo de **16,5 cm de comprimento e 16,5 cm de largura**, considerando o robô em sua configuração de operação e todos os componentes que façam parte de sua estrutura externa. |      Must      | -                | -                        |
+|  RNF12 | Compatibilidade com as dimensões do labirinto | A estrutura deve ser compatível com os corredores formados por células de **18 cm de lado**, permitindo a circulação do micromouse sem que suas dimensões impeçam a passagem pelo percurso.                                                |      Must      | -                | -                        |
+|  RNF13 | Massa estrutural                              | A massa do chassi e dos elementos estruturais deve ser mantida dentro de um limite que não comprometa a aceleração, frenagem, estabilidade e autonomia do micromouse.                                                                      |      Must      | -                | -                        |
+|  RNF14 | Resistência mecânica                          | A estrutura deve suportar os esforços mecânicos decorrentes da movimentação, aceleração, frenagem e eventuais impactos durante os testes, sem apresentar deformações que comprometam o funcionamento do robô.                              |      Must      | -                | -                        |
+|  RNF15 | Rigidez estrutural                            | O chassi deve apresentar rigidez suficiente para manter sua geometria e os componentes fixados em suas posições durante a execução dos percursos, evitando deformações ou folgas que prejudiquem a navegação.                              |      Must      | -                | -                        |
+|  RNF16 | Estabilidade estrutural                       | A estrutura deve proporcionar estabilidade ao micromouse durante acelerações, frenagens, curvas e mudanças de direção, evitando inclinações ou deslocamentos que comprometam sua movimentação.                                             |      Must      | -                | -                        |
+|  RNF17 | Distribuição de massa                         | A disposição dos componentes na estrutura deve proporcionar uma distribuição de massa adequada, evitando desequilíbrios que possam prejudicar a estabilidade e o desempenho do micromouse durante o percurso.                              |     Should     | -                | -                        |
+|  RNF18 | Compatibilidade entre subsistemas             | A estrutura deve possuir dimensões, espaços internos e pontos de fixação compatíveis com os componentes definidos pelas equipes de Hardware, Energia e Software, permitindo a integração dos subsistemas sem interferências físicas.       |      Must      | -                | -                        |
+|  RNF19 | Não interferência com o labirinto             | A estrutura não deve possuir dimensões, partes ou elementos que provoquem travamento, arraste ou deslocamento das paredes do labirinto durante a execução dos percursos.                                                                   |      Must      | -                | -                        |
+|  RNF20 | Precisão dimensional de fabricação            | As dimensões finais da estrutura devem permanecer dentro das tolerâncias definidas no projeto, garantindo que variações decorrentes do processo de fabricação não façam o micromouse ultrapassar os limites dimensionais estabelecidos.    |      Must      | -                | -                        |
+|  RNF21 | Segurança estrutural                          | A estrutura não deve apresentar pontas, arestas ou elementos expostos que possam causar danos aos componentes, ao labirinto ou comprometer a operação do micromouse.                                                                       |      Must      | -                | -                        |
+|  RNF22 | Durabilidade da estrutura                     | A estrutura deve manter suas características mecânicas e dimensões durante os testes e execuções previstas no projeto, sem apresentar desgaste ou deformação que comprometa o funcionamento do micromouse.                                 |     Should     | -                | -                        |
+|  RNF23 | Facilidade de montagem e desmontagem          | A estrutura deve ser projetada de forma que sua montagem, desmontagem e manutenção possam ser realizadas utilizando os recursos e ferramentas disponíveis para a equipe, sem procedimentos excessivamente complexos.                       |     Should     | -                | -                        |
+|  RNF24 | Aproveitamento do espaço interno              | A estrutura deve utilizar de forma eficiente o espaço disponível no chassi, permitindo a acomodação dos componentes necessários sem comprometer a circulação, manutenção, ventilação ou funcionamento dos demais subsistemas.              |     Should     | -                | -                        |
+|  RNF25 | Compatibilidade com os materiais disponíveis  | Os materiais utilizados na fabricação da estrutura devem ser compatíveis com os processos de fabricação, ferramentas, orçamento e recursos disponíveis para o desenvolvimento do projeto.                                                  |      Must      | -                | -                        |
+
 
 **Software**
 
