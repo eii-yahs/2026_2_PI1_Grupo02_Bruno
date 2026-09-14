@@ -60,13 +60,30 @@ A prioridade de cada item é definida pela classificação MoSCoW:
 
 **Software**
 
-| **ID** | **Nome do Requisito** | **Descrição** | **Prioridade** | **Responsáveis** | **Link Github Projects** |
-|:------:|------------------------|---------------|:--------------:|------------------|--------------------------|
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
-|  |  |  |  | - | - |
+| ID       | Nome do Requisito                   | Descrição                                                                                                                                                                                      | Prioridade  | Responsáveis | Link para projetos do Github |
+| -------- | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- | ------------ | ---------------------------- |
+| **RF01** | Identificação de paredes            | O software do **Rato Cego** deve identificar a presença de paredes no percurso a partir dos dados fornecidos pelos sensores.                                                                   | Deve    | -            | -                            |
+| **RF02** | Mapeamento do labirinto             | O software do **Rato Cego** deve construir e atualizar progressivamente o mapeamento do labirinto conforme o robô realiza o percurso.                                                          | Deve    | -            | -                            |
+| **RF03** | Localização no labirinto            | O software do **Rato Cego** deve monitorar a localização do robô dentro do labirinto durante o percurso.                                                                                       | Deve    | -            | -                            |
+| **RF04** | Determinação do percurso            | O software do **Rato Cego** deve determinar autonomamente os movimentos necessários para avançar pelo labirinto com base nas informações obtidas durante o percurso.                           | Deve    | -            | -                            |
+| **RF05** | Navegação autônoma                  | O **Rato Cego** deve navegar pelo labirinto sem intervenção humana durante a execução do percurso.                                                                                             | Deve    | -            | -                            |
+| **RF06** | Identificação do objetivo           | O software do **Rato Cego** deve identificar quando o robô alcançar a área de objetivo do labirinto.                                                                                           | Deve    | -            | -                            |
+| **RF07** | Registro do trajeto                 | O sistema deve registrar o trajeto percorrido pelo **Rato Cego** durante cada execução.                                                                                                        | Deve    | -            | -                            |
+| **RF08** | Transmissão de telemetria           | O **Rato Cego** deve transmitir ao sistema web os dados de desempenho necessários para o acompanhamento da execução.                                                                           | Deve    | -            | -                            |
+| **RF09** | Identificação do tipo de labirinto  | O sistema web deve identificar e exibir o tipo de labirinto correspondente à execução atual.                                                                                                   | Deve    | -            | -                            |
+| **RF10** | Visualização do trajeto             | Durante o percurso, o sistema web deve exibir e atualizar em tempo real o trajeto percorrido pelo **Rato Cego**.                                                                               | Deve    | -            | -                            |
+| **RF11** | Monitoramento da bateria            | Durante o percurso, o sistema web deve exibir e atualizar em tempo real o consumo de bateria do **Rato Cego**.                                                                                 | Deve    | -            | -                            |
+| **RF12** | Monitoramento do tempo              | O sistema deve contabilizar o tempo da execução e apresentá-lo no sistema web durante o percurso.                                                                                              | Deve    | -            | -                            |
+| **RF13** | Exibição da velocidade média        | O sistema web deve calcular e apresentar a velocidade média do **Rato Cego** referente à execução.                                                                                             | Deve    | -            | -                            |
+| **RF14** | Resultado do desafio                | O sistema web deve informar se o **Rato Cego** cumpriu ou não o desafio correspondente à execução.                                                                                             | Deve    | -            | -                            |
+| **RF15** | Armazenamento da execução           | Após a execução, o sistema deve armazenar no banco de dados as informações coletadas durante o percurso.                                                                                       | Deve    | -            | -                            |
+| **RF16** | Associação ao labirinto             | O sistema deve associar os dados armazenados de cada execução ao respectivo labirinto.                                                                                                         | Deve    | -            | -                            |
+| **RF17** | Consulta por labirinto              | O sistema web deve permitir consultar os dados das execuções referentes a um labirinto específico.                                                                                             | Deve    | -            | -                            |
+| **RF18** | Consulta geral                      | O sistema web deve permitir consultar conjuntamente os dados armazenados das execuções realizadas nos diferentes labirintos.                                                                   | Deve    | -            | -                            |
+| **RF19** | Consulta local do estado energético | O **Rato Cego** poderia informar localmente a condição da bateria por meio de um indicador visual, permitindo sua verificação sem acesso ao sistema web.                                       | Poderia | -            | -                            |
+| **RF20** | Conservação em bateria baixa        | O firmware do **Rato Cego** deveria monitorar a condição da bateria e, ao identificar nível crítico, adotar medidas para preservar energia e evitar desligamentos abruptos durante a execução. | Deveria | -            | -                            |
+| **RF21** | Sinalização do ciclo de recarga     | Durante a recarga, o **Rato Cego** poderia indicar visualmente o estado do ciclo de carregamento.                                                                                              | Poderia | -            | -                            |
+
 
 ## Requisitos Não-Funcionais (RNF)
 
