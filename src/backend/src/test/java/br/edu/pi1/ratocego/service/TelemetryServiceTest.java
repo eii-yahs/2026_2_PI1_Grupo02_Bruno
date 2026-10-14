@@ -131,6 +131,43 @@ class TelemetryServiceTest {
     }
 
     @Test
+    void rejectsInvalidPayloadWithoutSideEffectsAndProcessesTheNextValidSample() {
+        Run run = activeRun();
+        var payload = payload(1, 1, 1, "2026-10-09T12:00:01Z", "7.0", "100", "1.0");
+        when(parser.parseAndValidate("invalid", TelemetrySamplePayload.class))
+                .thenThrow(new IllegalArgumentException("Invalid MQTT JSON payload"));
+        when(parser.parseAndValidate("valid", TelemetrySamplePayload.class)).thenReturn(payload);
+        when(samples.existsByEventId(1)).thenReturn(false);
+        when(samples.existsByRun_IdAndSequenceNumber(1, 1)).thenReturn(false);
+        when(runs.findById(1L)).thenReturn(Optional.of(run));
+        when(mapper.toTelemetryUpdate(payload)).thenReturn(TelemetryUpdate.builder()
+                .runId(1).sequence(1).timestamp(payload.timestamp()).position(payload.position()).build());
+
+        assertThrows(IllegalArgumentException.class, () -> service.processSample("invalid"));
+        verify(samples, never()).save(any());
+        verify(events, never()).publishEvent(any());
+
+        service.processSample("valid");
+
+        verify(samples).save(any());
+        verify(events).publishEvent(any(WebSocketUpdateEvent.class));
+    }
+
+    @Test
+    void ignoresOutOfOrderSampleWithoutPublishingIt() {
+        Run run = activeRun();
+        run.setLastSequence(2);
+        run.setLastSampleAt(Instant.parse("2026-10-09T12:00:02Z"));
+        var payload = payload(3, 1, 1, "2026-10-09T12:00:03Z", "7.0", "100", "1.0");
+        stubAcceptedSample(payload, run);
+
+        service.processSample("json");
+
+        verify(samples, never()).save(any());
+        verify(events, never()).publishEvent(any());
+    }
+
+    @Test
     void rejectsTelemetryForNonRunningExecution() {
         Run run = activeRun();
         run.setStatus(RunStatus.INTERRUPT_REQUESTED);

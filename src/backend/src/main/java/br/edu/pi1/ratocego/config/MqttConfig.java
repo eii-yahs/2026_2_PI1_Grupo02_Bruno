@@ -37,7 +37,7 @@ public class MqttConfig {
             @Value("${app.mqtt.username}") String username,
             @Value("${app.mqtt.password}") String password,
             @Value("${app.mqtt.connection-timeout-seconds:10}") int connectionTimeoutSeconds,
-            @Value("${app.mqtt.keep-alive-seconds:30}") int keepAliveSeconds,
+            @Value("${app.mqtt.keep-alive-seconds:10}") int keepAliveSeconds,
             @Value("${app.mqtt.automatic-reconnect:true}") boolean automaticReconnect) {
 
         var options = new MqttConnectOptions();
