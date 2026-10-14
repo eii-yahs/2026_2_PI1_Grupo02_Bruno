@@ -36,6 +36,21 @@ class MqttConnectionHealthIndicatorTest {
     }
 
     @Test
+    void reportsUpAgainAfterFailedInboundAdapterResubscribes() {
+        var indicator = new MqttConnectionHealthIndicator();
+        subscribed(indicator, "mqttTelemetryInbound");
+        subscribed(indicator, "mqttRunStartedInbound");
+        subscribed(indicator, "mqttRunFinishedInbound");
+        subscribed(indicator, "mqttRunInterruptedInbound");
+
+        indicator.onConnectionFailed(new MqttConnectionFailedEvent(source("mqttTelemetryInbound")));
+        assertEquals(Status.DOWN, indicator.health().getStatus());
+
+        subscribed(indicator, "mqttTelemetryInbound");
+        assertEquals(Status.UP, indicator.health().getStatus());
+    }
+
+    @Test
     void ignoresEventsFromUntrackedComponents() {
         var indicator = new MqttConnectionHealthIndicator();
         MqttPahoComponent source = source("mqttOutbound");
