@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class RunQueryService {
@@ -27,5 +28,10 @@ public class RunQueryService {
         return runRepository.findAll(OLDEST_FIRST).stream()
                 .map(runMapper::toRunResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<RunResponse> findRunById(long runId) {
+        return runRepository.findById(runId).map(runMapper::toRunResponse);
     }
 }

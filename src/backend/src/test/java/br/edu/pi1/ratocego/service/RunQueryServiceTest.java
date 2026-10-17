@@ -9,8 +9,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.data.domain.Sort;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -49,6 +51,25 @@ class RunQueryServiceTest {
         when(runs.findAll(OLDEST_FIRST)).thenReturn(List.of());
 
         assertTrue(service.findAllRuns().isEmpty());
+    }
+
+    @Test
+    void findRunByIdReturnsTheRequestedRunWithItsMaze() {
+        when(runs.findById(2L)).thenReturn(Optional.of(run(2L, RunStatus.COMPLETED, 4, 8)));
+
+        var response = service.findRunById(2L).orElseThrow();
+
+        assertEquals(2L, response.id());
+        assertEquals(RunStatus.COMPLETED, response.status());
+        assertEquals(4, response.mazeRows());
+        assertEquals(8, response.mazeColumns());
+    }
+
+    @Test
+    void findRunByIdReturnsEmptyWhenRunDoesNotExist() {
+        when(runs.findById(99L)).thenReturn(Optional.empty());
+
+        assertFalse(service.findRunById(99L).isPresent());
     }
 
     private static Run run(long id, RunStatus status, int rows, int columns) {

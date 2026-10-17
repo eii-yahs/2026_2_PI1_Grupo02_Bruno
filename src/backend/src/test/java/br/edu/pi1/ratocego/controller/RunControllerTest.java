@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 import static org.hamcrest.Matchers.nullValue;
 import static org.mockito.Mockito.when;
@@ -80,5 +81,36 @@ class RunControllerTest {
         mockMvc.perform(get("/api/runs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getRunByIdReturnsTheRequestedRun() throws Exception {
+        when(runQueryService.findRunById(1L)).thenReturn(Optional.of(RunResponse.builder()
+                .id(1)
+                .status(RunStatus.COMPLETED)
+                .startedAt(Instant.parse("2026-10-09T14:00:00Z"))
+                .finishedAt(Instant.parse("2026-10-09T14:02:01Z"))
+                .duration(Duration.ofSeconds(121))
+                .mazeRows(4)
+                .mazeColumns(4)
+                .challengeCompleted(true)
+                .build()));
+
+        mockMvc.perform(get("/api/runs/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.duration").value("PT2M1S"))
+                .andExpect(jsonPath("$.mazeRows").value(4))
+                .andExpect(jsonPath("$.mazeColumns").value(4))
+                .andExpect(jsonPath("$.challengeCompleted").value(true));
+    }
+
+    @Test
+    void getRunByIdReturnsNotFoundWhenRunDoesNotExist() throws Exception {
+        when(runQueryService.findRunById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/runs/99"))
+                .andExpect(status().isNotFound());
     }
 }
