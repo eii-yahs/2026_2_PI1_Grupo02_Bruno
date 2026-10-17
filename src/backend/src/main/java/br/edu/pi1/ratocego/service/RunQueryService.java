@@ -12,7 +12,7 @@ import java.util.List;
 @Service
 public class RunQueryService {
 
-    private static final Sort MOST_RECENT_FIRST = Sort.by(Sort.Direction.DESC, "id");
+    private static final Sort OLDEST_FIRST = Sort.by(Sort.Direction.ASC, "id");
 
     private final RunRepository runRepository;
     private final RunMapper runMapper;
@@ -24,7 +24,7 @@ public class RunQueryService {
 
     @Transactional(readOnly = true)
     public List<RunResponse> findAllRuns() {
-        return runRepository.findAll(MOST_RECENT_FIRST).stream()
+        return runRepository.findAll(OLDEST_FIRST).stream()
                 .map(runMapper::toRunResponse)
                 .toList();
     }
