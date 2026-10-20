@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import App from './App.tsx'
-import { HistoryPage } from './pages/HistoryPage.tsx'
+import { GeneralQueryPage } from './pages/GeneralQueryPage.tsx'
 
-// Navegação por hash: #historico abre a consulta geral; qualquer outro valor abre o monitoramento
+// Navegação por hash: #consulta-geral abre a consulta geral; qualquer outro valor abre o monitoramento.
+// O monitoramento continua montado (só fica escondido) para não perder a conexão e o trajeto
+// de uma execução em andamento enquanto o operador consulta o histórico.
 export function Root() {
   const [hash, setHash] = useState(window.location.hash)
 
@@ -12,5 +14,10 @@ export function Root() {
     return () => window.removeEventListener('hashchange', onHashChange)
   }, [])
 
-  return hash.startsWith('#historico') ? <HistoryPage hash={hash} /> : <App />
+  const showGeneralQuery = hash.startsWith('#consulta-geral')
+
+  return <>
+    <div hidden={showGeneralQuery}><App /></div>
+    {showGeneralQuery && <GeneralQueryPage hash={hash} />}
+  </>
 }

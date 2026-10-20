@@ -1,0 +1,12 @@
+.line-chart { margin: 0; padding: 14px 16px 10px; border: 1px solid var(--line); border-radius: var(--radius-card); background: linear-gradient(145deg, #111b28 0%, #0f1925 100%); min-width: 0; }
+.line-chart .eyebrow { margin-bottom: 8px; }
+.line-chart-plot { position: relative; outline: none; touch-action: pan-y; }
+.line-chart-plot:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; border-radius: 4px; }
+.line-chart-grid { stroke: #1f2f40; stroke-width: 1; }
+.line-chart-tick { fill: var(--text-muted); font: 11px var(--mono); font-variant-numeric: tabular-nums; }
+.line-chart-crosshair { stroke: #5d7389; stroke-width: 1; }
+.line-chart-empty { display: grid; place-items: center; height: 100%; margin: 0; color: var(--text-muted); font-size: var(--text-small); }
+.line-chart-tooltip { position: absolute; transform: translate(-50%, -100%); display: grid; grid-template-columns: auto auto; align-items: center; gap: 2px 7px; padding: 7px 10px; border: 1px solid #304255; border-radius: var(--radius-control); background: #0b131e; box-shadow: 0 8px 20px #00000055; pointer-events: none; white-space: nowrap; }
+.line-chart-tooltip strong { color: var(--text); font: 600 var(--text-small) var(--mono); }
+.line-chart-tooltip > span:last-child { grid-column: 2; color: var(--text-secondary); font-size: var(--text-caption); }
+.line-chart-tooltip-key { width: 12px; height: 2px; border-radius: 1px; }
