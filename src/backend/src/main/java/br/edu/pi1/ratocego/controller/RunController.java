@@ -1,6 +1,7 @@
 package br.edu.pi1.ratocego.controller;
 
 import br.edu.pi1.ratocego.dto.rest.RunResponse;
+import br.edu.pi1.ratocego.dto.rest.TelemetrySampleResponse;
 import br.edu.pi1.ratocego.service.RunQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,5 +29,10 @@ public class RunController {
     @GetMapping("/{runId}")
     public ResponseEntity<RunResponse> getRunById(@PathVariable long runId) {
         return ResponseEntity.of(runQueryService.findRunById(runId));
+    }
+
+    @GetMapping("/{runId}/telemetry")
+    public ResponseEntity<List<TelemetrySampleResponse>> getRunTelemetry(@PathVariable long runId) {
+        return ResponseEntity.of(runQueryService.findRunTelemetry(runId));
     }
 }

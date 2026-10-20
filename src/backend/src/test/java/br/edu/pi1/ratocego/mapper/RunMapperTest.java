@@ -1,7 +1,9 @@
 package br.edu.pi1.ratocego.mapper;
 
+import br.edu.pi1.ratocego.model.Heading;
 import br.edu.pi1.ratocego.model.Run;
 import br.edu.pi1.ratocego.model.RunStatus;
+import br.edu.pi1.ratocego.model.TelemetrySample;
 import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
@@ -70,5 +72,32 @@ class RunMapperTest {
         run.setFinishedAt(Instant.parse("2026-10-09T14:00:05Z"));
 
         assertNull(mapper.toRunResponse(run).duration());
+    }
+
+    @Test
+    void mapsStoredTelemetrySampleToResponseWithItsPosition() {
+        var recordedAt = Instant.parse("2026-10-09T14:00:01Z");
+        var sample = new TelemetrySample();
+        sample.setSequenceNumber(7L);
+        sample.setRecordedAt(recordedAt);
+        sample.setPositionRow(2);
+        sample.setPositionColumn(3);
+        sample.setHeading(Heading.SOUTH);
+        sample.setDistanceTravelledMeters(new BigDecimal("1.75"));
+        sample.setCurrentSpeedMetersPerSecond(new BigDecimal("0.4"));
+        sample.setBatteryVoltageVolts(new BigDecimal("7.3"));
+        sample.setCurrentMilliAmps(new BigDecimal("250"));
+
+        var response = mapper.toTelemetrySampleResponse(sample);
+
+        assertEquals(7L, response.sequence());
+        assertEquals(recordedAt, response.recordedAt());
+        assertEquals(2, response.row());
+        assertEquals(3, response.column());
+        assertEquals(Heading.SOUTH, response.heading());
+        assertEquals(new BigDecimal("1.75"), response.distanceTravelledMeters());
+        assertEquals(new BigDecimal("0.4"), response.currentSpeedMetersPerSecond());
+        assertEquals(new BigDecimal("7.3"), response.batteryVoltageVolts());
+        assertEquals(new BigDecimal("250"), response.currentMilliAmps());
     }
 }
