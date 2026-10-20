@@ -2,6 +2,7 @@ package br.edu.pi1.ratocego.service;
 
 import br.edu.pi1.ratocego.mapper.RunMapperImpl;
 import br.edu.pi1.ratocego.model.Heading;
+import br.edu.pi1.ratocego.model.MazeType;
 import br.edu.pi1.ratocego.model.Run;
 import br.edu.pi1.ratocego.model.RunStatus;
 import br.edu.pi1.ratocego.model.TelemetrySample;
@@ -59,6 +60,37 @@ class RunQueryServiceTest {
         when(runs.findAll(OLDEST_FIRST)).thenReturn(List.of());
 
         assertTrue(service.findAllRuns().isEmpty());
+    }
+
+    @Test
+    void findRunsByMazeQueriesOnlyTheRequestedMazeInAttemptOrder() {
+        when(runs.findByMazeRowsAndMazeColumns(4, 8, OLDEST_FIRST)).thenReturn(List.of(
+                run(2L, RunStatus.COMPLETED, 4, 8),
+                run(5L, RunStatus.FAILED, 4, 8)));
+
+        var responses = service.findRunsByMaze(MazeType.GRID_8X4);
+
+        verify(runs).findByMazeRowsAndMazeColumns(4, 8, OLDEST_FIRST);
+        assertEquals(List.of(2L, 5L), responses.stream().map(response -> response.id()).toList());
+        assertTrue(responses.stream().allMatch(response -> response.mazeRows() == 4 && response.mazeColumns() == 8));
+    }
+
+    @Test
+    void findRunsByMazeMapsEachMazeTypeToItsDimensions() {
+        service.findRunsByMaze(MazeType.GRID_4X4);
+        service.findRunsByMaze(MazeType.GRID_8X4);
+        service.findRunsByMaze(MazeType.GRID_12X4);
+
+        verify(runs).findByMazeRowsAndMazeColumns(4, 4, OLDEST_FIRST);
+        verify(runs).findByMazeRowsAndMazeColumns(4, 8, OLDEST_FIRST);
+        verify(runs).findByMazeRowsAndMazeColumns(4, 12, OLDEST_FIRST);
+    }
+
+    @Test
+    void findRunsByMazeReturnsEmptyListWhenMazeHasNoRuns() {
+        when(runs.findByMazeRowsAndMazeColumns(4, 12, OLDEST_FIRST)).thenReturn(List.of());
+
+        assertTrue(service.findRunsByMaze(MazeType.GRID_12X4).isEmpty());
     }
 
     @Test

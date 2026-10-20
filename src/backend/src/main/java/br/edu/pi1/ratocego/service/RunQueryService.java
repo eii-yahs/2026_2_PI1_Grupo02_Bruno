@@ -3,6 +3,7 @@ package br.edu.pi1.ratocego.service;
 import br.edu.pi1.ratocego.dto.rest.RunResponse;
 import br.edu.pi1.ratocego.dto.rest.TelemetrySampleResponse;
 import br.edu.pi1.ratocego.mapper.RunMapper;
+import br.edu.pi1.ratocego.model.MazeType;
 import br.edu.pi1.ratocego.repository.RunRepository;
 import br.edu.pi1.ratocego.repository.TelemetrySampleRepository;
 import org.springframework.data.domain.Sort;
@@ -16,6 +17,8 @@ import java.util.Optional;
 public class RunQueryService {
 
     private static final Sort OLDEST_FIRST = Sort.by(Sort.Direction.ASC, "id");
+    // Os três tipos de labirinto (4×4, 8×4, 12×4) têm 4 linhas; muda só o número de colunas
+    private static final int MAZE_ROWS = 4;
 
     private final RunRepository runRepository;
     private final TelemetrySampleRepository telemetrySampleRepository;
@@ -35,6 +38,14 @@ public class RunQueryService {
                 .toList();
     }
 
+    // Execuções de um tipo de labirinto, identificado pelas dimensões gravadas na execução
+    @Transactional(readOnly = true)
+    public List<RunResponse> findRunsByMaze(MazeType mazeType) {
+        return runRepository.findByMazeRowsAndMazeColumns(MAZE_ROWS, mazeColumns(mazeType), OLDEST_FIRST).stream()
+                .map(runMapper::toRunResponse)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public Optional<RunResponse> findRunById(long runId) {
         return runRepository.findById(runId).map(runMapper::toRunResponse);
@@ -50,5 +61,14 @@ public class RunQueryService {
         return Optional.of(telemetrySampleRepository.findByRun_IdOrderBySequenceNumberAsc(runId).stream()
                 .map(runMapper::toTelemetrySampleResponse)
                 .toList());
+    }
+
+    // Mesmo padrão do simulador e do frontend: GRID_8X4 = 4 linhas e 8 colunas
+    private static int mazeColumns(MazeType mazeType) {
+        return switch (mazeType) {
+            case GRID_4X4 -> 4;
+            case GRID_8X4 -> 8;
+            case GRID_12X4 -> 12;
+        };
     }
 }
