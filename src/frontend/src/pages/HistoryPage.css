@@ -1,0 +1,38 @@
+/* Estilos próprios da página de histórico, com prefixo history-, para não conflitar com App.css/index.css.
+   As cores usam as variáveis do tema da tela de monitoramento, com valores reserva enquanto ele não está na main. */
+.history-page { min-height: 100vh; color: var(--text, #e4edf5); background: #080e16; font-family: 'IBM Plex Sans', 'Aptos', sans-serif; text-align: left; }
+.history-content { max-width: 1440px; margin: 0 auto; padding: 46px 5vw 25px; }
+.history-heading { margin-bottom: 24px; }
+.history-heading h1 { margin: 0; color: var(--text, #e4edf5); font-size: clamp(29px, 3vw, 39px); line-height: 1.1; font-weight: 560; letter-spacing: -.045em; }
+.history-eyebrow { margin: 0 0 10px; color: #87a0b8; font: 10px/1.4 var(--mono, 'IBM Plex Mono', Consolas, monospace); letter-spacing: .15em; }
+.history-subheading { margin: 9px 0 0; color: #91a2b2; font-size: 13px; }
+.history-message { padding: 16px; border: 1px solid var(--line, #26384b); border-radius: 6px; color: #91a2b2; background: var(--surface, #111b28); font-size: 13px; }
+.history-error { border-color: #66363b; color: #efa5a7; background: #301e25; }
+.history-back { display: inline-block; margin-bottom: 18px; color: var(--cyan, #18d3dc); font-size: 13px; text-decoration: none; }
+.history-back:hover { text-decoration: underline; }
+.history-mono { font-family: var(--mono, 'IBM Plex Mono', Consolas, monospace); font-variant-numeric: tabular-nums; }
+
+/* Tabela da consulta geral: rola na horizontal em telas pequenas (RNF42) */
+.history-table-wrap { overflow-x: auto; border: 1px solid var(--line, #26384b); border-radius: 6px; background: var(--surface, #111b28); }
+.history-table { width: 100%; border-collapse: collapse; font-size: 13px; white-space: nowrap; }
+.history-table th { padding: 12px 16px; color: #8da2b7; font: 10px var(--mono, 'IBM Plex Mono', Consolas, monospace); letter-spacing: .12em; text-align: left; text-transform: uppercase; border-bottom: 1px solid var(--line, #26384b); }
+.history-table td { padding: 12px 16px; border-bottom: 1px solid #1c2b3b; }
+.history-table tbody tr:last-child td { border-bottom: none; }
+.history-table tbody tr:hover { background: var(--surface-raised, #152233); }
+.history-table a { color: var(--cyan, #18d3dc); font-weight: 600; text-decoration: none; }
+.history-table a:hover { text-decoration: underline; }
+
+.history-status { display: inline-block; padding: 4px 8px; border-radius: 3px; color: #b4c3d1; background: #223143; font: 10px var(--mono, 'IBM Plex Mono', Consolas, monospace); }
+.history-status.status-completed { color: #8ce2b9; background: #123228; }
+.history-status.status-failed, .history-status.status-interrupted { color: #f2b4b6; background: #3a2026; }
+
+/* Detalhe da execução */
+.history-detail { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 12px; margin: 0; }
+.history-field { padding: 16px; border: 1px solid var(--line, #26384b); border-radius: 6px; background: var(--surface, #111b28); }
+.history-field dt { margin-bottom: 8px; color: #8da2b7; font: 10px var(--mono, 'IBM Plex Mono', Consolas, monospace); letter-spacing: .12em; text-transform: uppercase; }
+.history-field dd { margin: 0; font-size: 20px; font-variant-numeric: tabular-nums; }
+.history-field small { color: #91a2b2; font-size: 12px; }
+
+@media (max-width: 640px) {
+  .history-content { padding: 28px 16px; }
+}
