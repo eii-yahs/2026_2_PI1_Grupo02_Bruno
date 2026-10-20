@@ -1,7 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  font-family: 'IBM Plex Sans', 'Aptos', sans-serif;
+  font-family: 'Pixelify Sans', 'IBM Plex Sans', 'Aptos', sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
   color: #e4edf5;
   background: #080e16;
   font-synthesis: none;
@@ -12,17 +14,23 @@
   --surface-raised: #152233;
   --surface-low: #0d1621;
   --line: #26384b;
-  --muted: #7e94aa;
   --text: #e4edf5;
+  --text-secondary: #a2b2c1;
+  --text-muted: #8298ad;
   --cyan: #18d3dc;
   --green: #42d392;
   --amber: #f0b74b;
   --red: #f06e72;
   --mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+  --text-caption: 0.75rem;
+  --text-small: 0.8125rem;
+  --text-body: 0.875rem;
+  --radius-control: 6px;
+  --radius-card: 8px;
 }
 
 * { box-sizing: border-box; }
-body { min-width: 360px; margin: 0; min-height: 100vh; }
+body { min-width: 320px; margin: 0; min-height: 100vh; }
 button, select { font: inherit; }
 button:focus-visible, select:focus-visible, a:focus-visible { outline: 2px solid var(--cyan); outline-offset: 3px; }
 ::selection { background: #18d3dc44; color: white; }

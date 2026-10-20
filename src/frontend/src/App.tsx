@@ -135,8 +135,10 @@ function App() {
         {!connected && (
           <div className="connection-notice">
             <span className="notice-dot" />
-            Aguardando conexão com o WebSocket. Os indicadores serão preenchidos quando a
-            telemetria chegar.
+            <span className="connection-message">
+              Aguardando conexão com o WebSocket. Os indicadores serão preenchidos quando a
+              telemetria chegar.
+            </span>
           </div>
         )}
 

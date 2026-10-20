@@ -9,7 +9,8 @@ type Props = {
 }
 
 export function MetricCard({ label, value, unit, icon, mono = false }: Props) {
-  const numberClass = `metric-number ${mono ? 'mono' : ''}`
+  const isPlaceholder = value === '—' || value === '--:--'
+  const numberClass = `metric-number ${mono ? 'mono' : ''} ${isPlaceholder ? 'is-placeholder' : ''}`
 
   return (
     <article className="metric-card">

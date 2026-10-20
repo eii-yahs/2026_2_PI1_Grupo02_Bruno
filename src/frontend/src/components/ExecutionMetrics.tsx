@@ -1,33 +1,36 @@
 import { Icon } from './Icon'
 import { MetricCard } from './MetricCard'
-import type { Telemetry } from '../types/telemetry'
+import type { RunResult, Telemetry } from '../types/telemetry'
 import { formatNumber } from '../utils/format'
+import { getRunResultIcon, getRunStatusAppearance } from '../utils/runStatus'
 
 type Props = {
   telemetry: Telemetry
   clock: string
-  result: string
+  result: RunResult
 }
 
 export function ExecutionMetrics({ telemetry, clock, result }: Props) {
   const isBatteryLow = telemetry.batteryStatus === 'LOW'
-  const resultClass = result === 'Sucesso' ? 'result-success' : ''
-  const resultIcon = result === 'Sucesso' ? '✓' : result === 'Em andamento' ? '↗' : '—'
+  const resultClass = `result-${getRunStatusAppearance(result)}`
+  const resultIcon = getRunResultIcon(result)
   const resultLabel = result === 'Sucesso' ? 'Concluído' : result
   const batteryVoltage = telemetry.batteryVoltageVolts
 
   return (
     <aside className="metrics-column" aria-label="Dados da execução">
       <div className={`battery-card ${isBatteryLow ? 'battery-low' : ''}`}>
-        <div className="metric-label-row">
-          <span>Consumo da bateria</span>
+        <div className="battery-metric">
+          <span className="metric-label">Consumo da bateria</span>
           <span className="battery-value">
             {formatNumber(telemetry.chargeConsumedMilliampHours, 1)} <small>mAh</small>
           </span>
         </div>
-        <div className="battery-foot battery-voltage">
-          <span>Tensão da bateria</span>
-          <span>{batteryVoltage == null ? '— V' : `${formatNumber(batteryVoltage, 1)} V`}</span>
+        <div className="battery-metric">
+          <span className="metric-label">Tensão da bateria</span>
+          <span className="battery-value">
+            {batteryVoltage == null ? '—' : formatNumber(batteryVoltage, 1)} <small>V</small>
+          </span>
         </div>
         {isBatteryLow && (
           <p className="battery-warning">

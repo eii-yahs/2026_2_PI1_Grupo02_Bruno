@@ -1,17 +1,19 @@
 import { Icon } from './Icon'
 import type { MazeSize } from '../types/maze'
+import type { RunResult } from '../types/telemetry'
 import { mazeOptions } from '../types/maze'
+import { getRunStatusAppearance } from '../utils/runStatus'
 
 type Props = {
   maze: MazeSize
-  result: string
+  result: RunResult
   onMazeChange: (maze: MazeSize) => void
   onPrepare: () => void
 }
 
 export function ExecutionControls({ maze, result, onMazeChange, onPrepare }: Props) {
-  const stateClass =
-    result === 'Sucesso' ? 'success' : result === 'Interrompido' ? 'halted' : ''
+  const appearance = getRunStatusAppearance(result)
+  const stateClass = appearance === 'failure' ? 'halted' : appearance
 
   return (
     <section className="control-panel" aria-label="Controles do percurso">
@@ -30,7 +32,7 @@ export function ExecutionControls({ maze, result, onMazeChange, onPrepare }: Pro
         </select>
       </div>
 
-      <span className={`run-state ${stateClass}`}>
+      <span className={`run-state ${stateClass === 'neutral' ? '' : stateClass}`}>
         <span className="state-mark" />
         {result}
       </span>
