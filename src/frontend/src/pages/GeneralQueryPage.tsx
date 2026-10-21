@@ -4,7 +4,7 @@ import { AppHeader } from '../components/AppHeader'
 import { LineChart, type ChartPoint } from '../components/LineChart'
 import { MazeBoard } from '../components/MazeBoard'
 import {
-  challengeLabel, durationSeconds, formatDateTime, formatDuration, matchesSearch, mazeLabel, statusLabels, summarizeRuns,
+  challengeLabel, durationSeconds, formatDateTime, formatDuration, matchesSearch, mazeLabel, statusLabels, summarizeRuns, withUnit,
   type Run, type RunStatus, type TelemetrySample,
 } from '../models/run'
 import { mazeOptions } from '../types/maze'
@@ -259,7 +259,7 @@ function RunDetail({ runId }: { runId: number }) {
   </>
 }
 
-function Stat({ label, value, unit }: { label: string; value: string; unit?: string }) {
+export function Stat({ label, value, unit }: { label: string; value: string; unit?: string }) {
   const isPlaceholder = value === '—'
   return <article className="metric-card">
     <span className="metric-label">{label}</span>
@@ -269,13 +269,8 @@ function Stat({ label, value, unit }: { label: string; value: string; unit?: str
   </article>
 }
 
-function StatusTag({ status }: { status: RunStatus }) {
+export function StatusTag({ status }: { status: RunStatus }) {
   return <span className={`query-status status-${status.toLowerCase()}`}>{statusLabels[status]}</span>
-}
-
-function withUnit(value: number | null, unit: string) {
-  const formatted = formatNumber(value ?? undefined)
-  return formatted === '—' ? formatted : `${formatted} ${unit}`
 }
 
 // Tempo desde o início da execução, no formato do log do protótipo (ex.: 012.3s)
