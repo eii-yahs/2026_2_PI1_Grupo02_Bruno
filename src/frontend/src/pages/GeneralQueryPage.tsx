@@ -87,6 +87,11 @@ function RunList() {
           onChange={(e) => setSearch(e.target.value)}
         />
         <span className="query-count">{filtered.length} de {runs.length} execuções</span>
+        <nav className="query-maze-links" aria-label="Consulta por labirinto">
+          {Object.entries(mazeOptions).map(([type, option]) => <a key={type} href={`#consulta-por-labirinto/${type}`}>
+            Ver {option.label} →
+          </a>)}
+        </nav>
       </div>
 
       {filtered.length === 0

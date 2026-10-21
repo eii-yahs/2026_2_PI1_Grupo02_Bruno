@@ -13,6 +13,9 @@
 .query-filters input { flex: 1 1 220px; min-width: 0; }
 .query-filters input::placeholder { color: var(--text-muted); }
 .query-count { margin-left: auto; color: var(--text-muted); font: var(--text-caption) var(--mono); white-space: nowrap; }
+.query-maze-links { display: flex; flex-wrap: wrap; gap: 8px; }
+.query-maze-links a { min-height: 40px; display: inline-flex; align-items: center; padding: 0 12px; border: 1px solid #1e6a74; border-radius: var(--radius-control); color: var(--cyan); background: #0c1520; font: var(--text-small) var(--mono); text-decoration: none; white-space: nowrap; }
+.query-maze-links a:hover { border-color: var(--cyan); background: #0f2430; }
 
 /* Tabela: rola na horizontal em telas pequenas (RNF42) */
 .query-table-wrap { position: relative; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius-card); background: var(--surface); }
