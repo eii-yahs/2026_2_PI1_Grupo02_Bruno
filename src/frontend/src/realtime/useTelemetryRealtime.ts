@@ -8,6 +8,12 @@ const DESTINATIONS = [
   ['/topic/run-interrupted', 'interrupted'],
 ] as const
 
+// RNF31: heartbeat de aplicação a cada 2 s; conexão indisponível após 6 s sem heartbeat válido.
+const HEARTBEAT_DESTINATION = '/topic/heartbeat'
+const CLIENT_HEARTBEAT_DESTINATION = '/app/heartbeat'
+const HEARTBEAT_INTERVAL_MS = 2_000
+const HEARTBEAT_TIMEOUT_MS = 6_000
+
 export type RealtimeMessage = { kind: 'started' | 'telemetry' | 'finished' | 'interrupted'; payload: Record<string, unknown>; receivedAt: number }
 
 function isValidTelemetry(payload: Record<string, unknown>) {
@@ -28,6 +34,13 @@ export function useTelemetryRealtime() {
 
   useEffect(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    let lastHeartbeatAt = 0
+    let heartbeatTimer: number | undefined
+    let watchdogTimer: number | undefined
+    const stopTimers = () => {
+      window.clearInterval(heartbeatTimer)
+      window.clearInterval(watchdogTimer)
+    }
     const client = new Client({
       brokerURL: `${protocol}//${window.location.host}/ws`,
       connectionTimeout: 8_000,
@@ -38,6 +51,31 @@ export function useTelemetryRealtime() {
       heartbeatOutgoing: 10_000,
       onConnect: () => {
         setConnected(true)
+        lastHeartbeatAt = Date.now()
+        stopTimers()
+        client.subscribe(HEARTBEAT_DESTINATION, (frame) => {
+          try {
+            const payload: unknown = JSON.parse(frame.body)
+            if (payload && typeof payload === 'object' && 'sequence' in payload) {
+              lastHeartbeatAt = Date.now()
+              setConnected(true)
+            }
+          } catch (error) {
+            console.error('[realtime] invalid heartbeat', error)
+          }
+        })
+        heartbeatTimer = window.setInterval(() => {
+          client.publish({
+            destination: CLIENT_HEARTBEAT_DESTINATION,
+            body: JSON.stringify({ timestamp: new Date().toISOString() }),
+          })
+        }, HEARTBEAT_INTERVAL_MS)
+        watchdogTimer = window.setInterval(() => {
+          if (Date.now() - lastHeartbeatAt > HEARTBEAT_TIMEOUT_MS) {
+            setConnected(false)
+            client.webSocket?.close()
+          }
+        }, 1_000)
         DESTINATIONS.forEach(([destination, kind]) => client.subscribe(destination, (frame) => {
           try {
             const payload: unknown = JSON.parse(frame.body)
@@ -52,12 +90,18 @@ export function useTelemetryRealtime() {
           }
         }))
       },
-      onWebSocketClose: () => setConnected(false),
+      onWebSocketClose: () => {
+        stopTimers()
+        setConnected(false)
+      },
       onWebSocketError: () => setConnected(false),
       onStompError: (frame) => console.error('[realtime] broker error:', frame.headers.message, frame.body),
     })
     client.activate()
-    return () => { void client.deactivate() }
+    return () => {
+      stopTimers()
+      void client.deactivate()
+    }
   }, [])
 
   return { connected, lastMessageAt, message }
