@@ -1,6 +1,7 @@
 package br.edu.pi1.ratocego.service.port;
 
 import br.edu.pi1.ratocego.dto.websocket.RunFinishedUpdate;
+import br.edu.pi1.ratocego.dto.websocket.HeartbeatUpdate;
 import br.edu.pi1.ratocego.dto.websocket.RunInterruptedUpdate;
 import br.edu.pi1.ratocego.dto.websocket.RunStartedUpdate;
 import br.edu.pi1.ratocego.dto.websocket.TelemetryUpdate;
@@ -15,4 +16,6 @@ public interface TelemetryPublisher {
     void publishRunFinished(RunFinishedUpdate update);
 
     void publishRunInterrupted(RunInterruptedUpdate update);
+
+    void publishHeartbeat(HeartbeatUpdate update);
 }
