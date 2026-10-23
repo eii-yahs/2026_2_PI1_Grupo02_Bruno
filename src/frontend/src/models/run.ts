@@ -1,4 +1,4 @@
-import { formatElapsedTime } from '../utils/format'
+import { formatElapsedTime, formatNumber } from '../utils/format'
 
 export type RunStatus = 'START_REQUESTED' | 'IN_PROGRESS' | 'INTERRUPT_REQUESTED' | 'COMPLETED' | 'FAILED' | 'INTERRUPTED'
 
@@ -75,9 +75,10 @@ export type RunSummary = {
   total: number
   successRatePercent: number | null
   averageChargeMilliampHours: number | null
+  averageDurationSeconds: number | null
 }
 
-// Métricas agregadas da Consulta Geral. A taxa de sucesso considera só execuções encerradas
+// Métricas agregadas da Consulta Geral e da Consulta por Labirinto. A taxa de sucesso considera só execuções encerradas
 // (concluídas, com falha ou interrompidas) e conta como sucesso as que concluíram o desafio.
 export function summarizeRuns(runs: Run[]): RunSummary {
   const finished = runs.filter((run) => finishedStatuses.includes(run.status))
@@ -85,12 +86,26 @@ export function summarizeRuns(runs: Run[]): RunSummary {
   const charges = runs
     .map((run) => run.chargeConsumedMilliampHours)
     .filter((charge): charge is number => charge != null)
+  const durations = runs
+    .map((run) => durationSeconds(run.duration))
+    .filter((duration): duration is number => duration != null)
 
   return {
     total: runs.length,
     successRatePercent: finished.length === 0 ? null : (succeeded.length / finished.length) * 100,
-    averageChargeMilliampHours: charges.length === 0 ? null : charges.reduce((sum, charge) => sum + charge, 0) / charges.length,
+    averageChargeMilliampHours: average(charges),
+    averageDurationSeconds: average(durations),
   }
+}
+
+function average(values: number[]) {
+  return values.length === 0 ? null : values.reduce((sum, value) => sum + value, 0) / values.length
+}
+
+// Valor com unidade para as tabelas de consulta (ex.: 260.00 mAh); sem valor mostra —
+export function withUnit(value: number | null, unit: string) {
+  const formatted = formatNumber(value ?? undefined)
+  return formatted === '—' ? formatted : `${formatted} ${unit}`
 }
 
 // Busca livre da Consulta Geral: compara com o ID, a data de início e o labirinto

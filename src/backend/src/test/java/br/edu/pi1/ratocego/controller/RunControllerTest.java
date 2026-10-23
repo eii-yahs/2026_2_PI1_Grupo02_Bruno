@@ -3,6 +3,7 @@ package br.edu.pi1.ratocego.controller;
 import br.edu.pi1.ratocego.dto.rest.RunResponse;
 import br.edu.pi1.ratocego.dto.rest.TelemetrySampleResponse;
 import br.edu.pi1.ratocego.model.Heading;
+import br.edu.pi1.ratocego.model.MazeType;
 import br.edu.pi1.ratocego.model.RunStatus;
 import br.edu.pi1.ratocego.service.RunQueryService;
 import org.junit.jupiter.api.Test;
@@ -17,7 +18,11 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -83,6 +88,39 @@ class RunControllerTest {
         mockMvc.perform(get("/api/runs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getRunsWithMazeTypeReturnsOnlyRunsOfThatMaze() throws Exception {
+        when(runQueryService.findRunsByMaze(MazeType.GRID_8X4)).thenReturn(List.of(
+                RunResponse.builder().id(2).status(RunStatus.COMPLETED).mazeRows(4).mazeColumns(8).build(),
+                RunResponse.builder().id(5).status(RunStatus.FAILED).mazeRows(4).mazeColumns(8).build()));
+
+        mockMvc.perform(get("/api/runs").param("mazeType", "GRID_8X4"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(2))
+                .andExpect(jsonPath("$[1].id").value(5))
+                .andExpect(jsonPath("$[*].mazeColumns", everyItem(is(8))));
+
+        verify(runQueryService, never()).findAllRuns();
+    }
+
+    @Test
+    void getRunsWithMazeTypeReturnsEmptyArrayWhenMazeHasNoRuns() throws Exception {
+        when(runQueryService.findRunsByMaze(MazeType.GRID_12X4)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/runs").param("mazeType", "GRID_12X4"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getRunsRejectsUnknownMazeType() throws Exception {
+        mockMvc.perform(get("/api/runs").param("mazeType", "GRID_99X4"))
+                .andExpect(status().isBadRequest());
+
+        verify(runQueryService, never()).findAllRuns();
     }
 
     @Test

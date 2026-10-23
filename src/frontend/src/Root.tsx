@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react'
 import App from './App.tsx'
 import { GeneralQueryPage } from './pages/GeneralQueryPage.tsx'
+import { MazeQueryPage } from './pages/MazeQueryPage.tsx'
 
-// Navegação por hash: #consulta-geral abre a consulta geral; qualquer outro valor abre o monitoramento.
+// Navegação por hash: #consulta-geral abre a consulta geral, #consulta-por-labirinto/GRID_4X4 a consulta
+// por labirinto; qualquer outro valor abre o monitoramento.
 // O monitoramento continua montado (só fica escondido) para não perder a conexão e o trajeto
 // de uma execução em andamento enquanto o operador consulta o histórico.
 export function Root() {
@@ -15,9 +17,11 @@ export function Root() {
   }, [])
 
   const showGeneralQuery = hash.startsWith('#consulta-geral')
+  const showMazeQuery = hash.startsWith('#consulta-por-labirinto')
 
   return <>
-    <div hidden={showGeneralQuery}><App /></div>
+    <div hidden={showGeneralQuery || showMazeQuery}><App /></div>
     {showGeneralQuery && <GeneralQueryPage hash={hash} />}
+    {showMazeQuery && <MazeQueryPage hash={hash} />}
   </>
 }

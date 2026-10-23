@@ -4,20 +4,17 @@ import { AppHeader } from '../components/AppHeader'
 import { LineChart, type ChartPoint } from '../components/LineChart'
 import { MazeBoard } from '../components/MazeBoard'
 import {
-  challengeLabel, durationSeconds, formatDateTime, formatDuration, matchesSearch, mazeLabel, statusLabels, summarizeRuns,
+  challengeLabel, durationSeconds, formatDateTime, formatDuration, matchesSearch, mazeLabel, statusLabels, summarizeRuns, withUnit,
   type Run, type RunStatus, type TelemetrySample,
 } from '../models/run'
 import { mazeOptions } from '../types/maze'
 import { formatNumber } from '../utils/format'
 import '../App.css'
+import {
+  breadcrumbClass, chartsClass, countClass, fieldClass, filtersClass, tableClass, tableWrapClass, viewLinkClass,
+} from './queryClasses'
 
-const fieldClass = 'min-h-10 rounded-(--radius-control) border border-[#30445a] bg-[#0c1520] px-2.5 py-2 font-(family-name:--mono)! text-(length:--text-small)! leading-[normal]! font-normal! text-(--text)'
-const tableClass = [
-  'w-full border-collapse whitespace-nowrap text-(length:--text-body)',
-  '[&_th]:border-b [&_th]:border-(--line) [&_th]:p-3 [&_th]:text-left [&_th]:font-(family-name:--mono) [&_th]:text-(length:--text-caption) [&_th]:leading-[normal] [&_th]:font-normal [&_th]:tracking-[.12em] [&_th]:text-(--text-muted) [&_th]:uppercase',
-  '[&_td]:border-b [&_td]:border-[#1c2b3b] [&_td]:p-3 [&_tbody_tr:last-child_td]:border-b-0 [&_tbody_tr:hover]:bg-(--surface-raised)',
-  '[&_a]:font-semibold [&_a]:text-(--cyan) [&_a]:no-underline [&_a:hover]:underline',
-].join(' ')
+const mazeLinkClass = 'inline-flex min-h-10 items-center rounded-(--radius-control) border border-[#1e6a74] bg-[#0c1520] px-3 font-(family-name:--mono) text-(length:--text-small) leading-[normal] whitespace-nowrap text-(--cyan) no-underline hover:border-(--cyan) hover:bg-[#0f2430]'
 const statusClasses: Record<RunStatus, string> = {
   START_REQUESTED: 'bg-[#223143] text-[#b4c3d1]',
   IN_PROGRESS: 'bg-[#223143] text-[#b4c3d1]',
@@ -83,7 +80,7 @@ function RunList() {
         <Stat label="Consumo médio geral" value={formatNumber(summary.averageChargeMilliampHours ?? undefined)} unit="mAh" />
       </div>
 
-      <div className="mb-3.5 flex flex-wrap items-center gap-2.5 rounded-(--radius-card) border border-(--line) bg-(--surface) p-3">
+      <div className={filtersClass}>
         <select className={`${fieldClass} cursor-pointer`} aria-label="Filtrar por labirinto" value={maze} onChange={(e) => setMaze(e.target.value)}>
           <option value="">Todos os labirintos</option>
           {Object.values(mazeOptions).map((option) => <option key={option.label} value={option.label}>{option.label}</option>)}
@@ -100,14 +97,17 @@ function RunList() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-        <span className="ml-auto font-(family-name:--mono) text-(length:--text-caption) leading-[normal] whitespace-nowrap text-(--text-muted) [@media(max-width:700px)]:ml-0">
-          {filtered.length} de {runs.length} execuções
-        </span>
+        <span className={countClass}>{filtered.length} de {runs.length} execuções</span>
+        <nav className="flex flex-wrap gap-2" aria-label="Consulta por labirinto">
+          {Object.entries(mazeOptions).map(([type, option]) => <a key={type} className={mazeLinkClass} href={`#consulta-por-labirinto/${type}`}>
+            Ver {option.label} →
+          </a>)}
+        </nav>
       </div>
 
       {filtered.length === 0
         ? <Message>Nenhuma execução corresponde aos filtros.</Message>
-        : <div className="relative overflow-x-auto rounded-(--radius-card) border border-(--line) bg-(--surface)">
+        : <div className={tableWrapClass}>
           <table className={tableClass}>
             <thead>
               <tr>
@@ -135,19 +135,14 @@ function RunList() {
                 <td className="mono">{withUnit(run.averageSpeedMetersPerSecond, 'm/s')}</td>
                 <td className="mono">{withUnit(run.distanceTravelledMeters, 'm')}</td>
                 <td>
-                  <a
-                    className="inline-block rounded-(--radius-control) border border-[#1e6a74] px-[9px] py-[3px] font-(family-name:--mono) text-(length:--text-caption) leading-[normal]"
-                    href={`#consulta-geral/${run.id}`}
-                  >
-                    ver →
-                  </a>
+                  <a className={viewLinkClass} href={`#consulta-geral/${run.id}`}>ver →</a>
                 </td>
               </tr>)}
             </tbody>
           </table>
         </div>}
 
-      {filtered.length > 0 && <div className="mt-3.5 grid grid-cols-2 gap-3.5 [@media(max-width:960px)]:grid-cols-1">
+      {filtered.length > 0 && <div className={chartsClass}>
         <LineChart
           title="CONSUMO DE BATERIA × TENTATIVA (mAh)"
           points={attemptPoints((run) => run.chargeConsumedMilliampHours)}
@@ -198,13 +193,10 @@ function RunDetail({ runId }: { runId: number }) {
     })
 
   return <>
-    <nav
-      className="mb-3.5 flex flex-wrap gap-2 font-(family-name:--mono) text-(length:--text-small) leading-[normal] text-(--text-secondary) [&_a]:text-(--cyan) [&_a]:no-underline [&_a:hover]:underline"
-      aria-label="Caminho"
-    >
+    <nav className={breadcrumbClass} aria-label="Caminho">
       <a href="#consulta-geral">Consulta geral</a>
       {run && <><span>/</span>{mazeLabel(run)}</>}
-      <span>/</span><b className="font-semibold text-(--text)">#{runId}</b>
+      <span>/</span><b>#{runId}</b>
     </nav>
 
     {error && <Message error>{error}</Message>}
@@ -298,12 +290,12 @@ function Value({ className = '', children }: { className?: string; children: Rea
   return <strong className={`text-(length:--text-body) font-semibold text-(--text) ${className}`}>{children}</strong>
 }
 
-function Message({ error = false, children }: { error?: boolean; children: ReactNode }) {
+export function Message({ error = false, children }: { error?: boolean; children: ReactNode }) {
   const colors = error ? 'border-[#66363b] bg-[#301e25] text-[#efa5a7]' : 'border-(--line) bg-(--surface) text-(--text-secondary)'
   return <p className={`rounded-(--radius-card) border p-4 text-(length:--text-body) ${colors}`}>{children}</p>
 }
 
-function Stat({ label, value, unit }: { label: string; value: string; unit?: string }) {
+export function Stat({ label, value, unit }: { label: string; value: string; unit?: string }) {
   const isPlaceholder = value === '—'
   return <article className="metric-card">
     <span className="metric-label">{label}</span>
@@ -313,15 +305,10 @@ function Stat({ label, value, unit }: { label: string; value: string; unit?: str
   </article>
 }
 
-function StatusTag({ status }: { status: RunStatus }) {
+export function StatusTag({ status }: { status: RunStatus }) {
   return <span className={`inline-block rounded-[3px] px-2 py-1 font-(family-name:--mono) text-(length:--text-caption) leading-[normal] whitespace-nowrap ${statusClasses[status]}`}>
     {statusLabels[status]}
   </span>
-}
-
-function withUnit(value: number | null, unit: string) {
-  const formatted = formatNumber(value ?? undefined)
-  return formatted === '—' ? formatted : `${formatted} ${unit}`
 }
 
 function elapsedLabel(recordedAt: string, startedAt: number) {

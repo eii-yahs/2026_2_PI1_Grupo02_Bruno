@@ -1,7 +1,9 @@
 import type { Run, TelemetrySample } from '../models/run'
+import type { MazeSize } from '../types/maze'
 
-export async function fetchRuns(): Promise<Run[]> {
-  const response = await fetch('/api/runs')
+// Sem mazeType: todas as execuções (consulta geral). Com mazeType: só as daquele labirinto (consulta por labirinto)
+export async function fetchRuns(mazeType?: MazeSize): Promise<Run[]> {
+  const response = await fetch(mazeType ? `/api/runs?mazeType=${mazeType}` : '/api/runs')
   if (!response.ok) throw new Error(`Erro ${response.status} ao consultar as execuções`)
   return response.json()
 }
