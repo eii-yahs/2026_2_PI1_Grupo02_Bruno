@@ -27,7 +27,7 @@
 - **Justificativa:** Diferente do esquemático anterior, a nova arquitetura com a "Mini Ponte H" não dispõe de um regulador interno. Portanto, o LM7805 tornou-se uma adição obrigatória para atuar como conversor *step-down*, reduzindo a tensão bruta da bateria (8.4V) para os 5V exigidos pelo ESP32 de forma segura, garantindo que o "cérebro" do robô não seja danificado por sobretensão.
 
 ### 3. Driver de motor e locomoção
-- **Componentes:** Módulo Mini Ponte H e dois motores DC com *encoders* integrados.
+- **Componentes:** Módulo mini ponte H (MX1508) e dois motores DC com *encoders* integrados.
 - **Conexões principais:** A Mini Ponte H é alimentada diretamente pelos 8.4V da bateria. O ESP32 envia sinais de controle para os pinos de entrada (IN1 a IN4), e o *driver* entrega a potência correspondente para as saídas dos motores (OUT1 a OUT4). 
 - **Justificativa:** A substituição do volumoso L298N tradicional pela Mini Ponte H foi uma decisão de otimização de espaço e peso. Em competições de micromouse, reduzir a massa e o tamanho da placa aumenta consideravelmente a agilidade e a relação peso/potência do robô. Embora tenha exigido a adição do regulador LM7805 externo, a Mini Ponte H é muito mais eficiente e perfeitamente dimensionada para a corrente exigida pelos micro motores DC do projeto.
 
