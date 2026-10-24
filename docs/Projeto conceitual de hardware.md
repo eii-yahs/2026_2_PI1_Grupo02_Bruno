@@ -50,3 +50,27 @@
 - **Componentes:** Chave interruptora mecânica (*switch*) e capacitores para o regulador (ex: 0.47µF e 100nF).
 - **Conexões principais:** A chave (*switch*) está conectada logo após o terminal VIN- do INA219, servindo de ponte para o restante do circuito e para a medição no INA219. Os capacitores estão alocados nas entradas e saídas do LM7805 e próximos ao ESP32.
 - **Justificativa:** A chave mecânica permite ligar e desligar o robô rapidamente de forma segura, prevenindo desgastes dos conectores da bateria e garantindo que a partida do robô no labirinto seja controlada. Os capacitores são críticos para a estabilidade do regulador LM7805 e para a filtragem geral (*bypass*). Como os motores DC geram ruído elétrico severo e demandam picos de corrente ao arrancar ou inverter o sentido, os capacitores absorvem essas oscilações e filtram as altas frequências. Sem eles, o ruído da ponte H invadiria a alimentação lógica, causando travamentos e reinicializações indesejadas no ESP32.
+
+## Mapeamento de Pinos (Pinout) do Microcontrolador
+
+A tabela a seguir descreve a alocação dos pinos do módulo ESP32 (ESP-WROOM-32) utilizados no projeto, detalhando a sua respectiva função e o subsistema ao qual estão conectados, conforme definido no esquemático elétrico do robô[cite: 8].
+
+| Pino na Placa (Serigrafia) | GPIO Interno | Subsistema | Função / Descrição |
+| :--- | :--- | :--- | :--- |
+| **VIN** | - | Alimentação | Entrada de alimentação lógica de 5V (proveniente do regulador LM7805)[cite: 8]. |
+| **GND** | - | Alimentação | Referência de terra (GND) comum do circuito[cite: 8]. |
+| **3V3** | - | Alimentação | Saída regulada de 3.3V, utilizada para alimentar os quatro módulos de sensores IR[cite: 8]. |
+| **D21** | GPIO21 | Gerenciamento de Energia | Linha SDA (dados) do barramento I2C para comunicação com o sensor INA219[cite: 8]. |
+| **D22** | GPIO22 | Gerenciamento de Energia | Linha SCL (clock) do barramento I2C para comunicação com o sensor INA219[cite: 8]. |
+| **D35** | GPIO35 | Sistema de Percepção | Leitura do sinal do sensor infravermelho IR1[cite: 8]. |
+| **VP** | GPIO36 | Sistema de Percepção | Leitura do sinal do sensor infravermelho IR2[cite: 8]. |
+| **VN** | GPIO39 | Sistema de Percepção | Leitura do sinal do sensor infravermelho IR3[cite: 8]. |
+| **D34** | GPIO34 | Sistema de Percepção | Leitura do sinal do sensor infravermelho IR4[cite: 8]. |
+| **D32** | GPIO32 | Odometria (Motor A) | Leitura do canal C1 do encoder de quadratura do motor U3 (interrupção de hardware)[cite: 8]. |
+| **D33** | GPIO33 | Odometria (Motor A) | Leitura do canal C2 do encoder de quadratura do motor U3 (interrupção de hardware)[cite: 8]. |
+| **D25** | GPIO25 | Odometria (Motor B) | Leitura do canal C1 do encoder de quadratura do motor U6 (interrupção de hardware)[cite: 8]. |
+| **D26** | GPIO26 | Odometria (Motor B) | Leitura do canal C2 do encoder de quadratura do motor U6 (interrupção de hardware)[cite: 8]. |
+| **RX2** | GPIO16 | Atuação (Ponte H) | Sinal de controle (IN1) para o motor A na Mini Ponte H[cite: 8]. |
+| **TX2** | GPIO17 | Atuação (Ponte H) | Sinal de controle (IN2) para o motor A na Mini Ponte H[cite: 8]. |
+| **D18** | GPIO18 | Atuação (Ponte H) | Sinal de controle (IN3) para o motor B na Mini Ponte H[cite: 8]. |
+| **D19** | GPIO19 | Atuação (Ponte H) | Sinal de controle (IN4) para o motor B na Mini Ponte H[cite: 8]. |
