@@ -4,7 +4,7 @@
 
 | Diagrama de blocos | Esquemático |
 |:------------------:|:-----------:|
-| <img src="Images/diagrama_de_blocos_micro_mouse_hardware.png" alt="Diagrama de blocos do micromouse" width="450"> | <img src="Images/MICRO_MOUSE_SCHEMATIC_1.png" alt="Esquemático do micromouse" width="450"> |
+| <img src="Images/BLOCK_DIAGRAM.svg" alt="Diagrama de blocos do micromouse" width="450"> | <img src="Images/MICRO_MOUSE_SCHEMATIC_1.png" alt="Esquemático do micromouse" width="450"> |
 
 <figcaption>
 
