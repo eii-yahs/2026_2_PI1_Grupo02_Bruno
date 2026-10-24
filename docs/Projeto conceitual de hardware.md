@@ -51,6 +51,11 @@
 - **Conexões principais:** A chave (*switch*) está conectada logo após o terminal VIN- do INA219, servindo de ponte para o restante do circuito e para a medição no INA219. Os capacitores estão alocados nas entradas e saídas do LM7805 e próximos ao ESP32.
 - **Justificativa:** A chave mecânica permite ligar e desligar o robô rapidamente de forma segura, prevenindo desgastes dos conectores da bateria e garantindo que a partida do robô no labirinto seja controlada. Os capacitores são críticos para a estabilidade do regulador LM7805 e para a filtragem geral (*bypass*). Como os motores DC geram ruído elétrico severo e demandam picos de corrente ao arrancar ou inverter o sentido, os capacitores absorvem essas oscilações e filtram as altas frequências. Sem eles, o ruído da ponte H invadiria a alimentação lógica, causando travamentos e reinicializações indesejadas no ESP32.
 
+### 8. Componentes adicionais
+- **Placa perfurada:** Utilizada para soldagem e conexão dos componentes;
+- **Barra pinos fêmea:** Utilizada para encaixe dos módulos de ESP32, ponte-h mini e INA219 para que não aja necessidade de dessoldagem de componentes da placa;
+- **Conector XT30 macho:** Utilizado para conexão da bateria com o sistema;
+
 ## Mapeamento de Pinos (Pinout) do Microcontrolador
 
 A tabela a seguir descreve a alocação dos pinos do módulo ESP32 (ESP-WROOM-32) utilizados no projeto, detalhando a sua respectiva função e o subsistema ao qual estão conectados, conforme definido no esquemático elétrico do robô.
