@@ -34,7 +34,7 @@
 ### 4. Sensores IR (sistema de percepção)
 - **Componentes:** Quatro módulos de sensores infravermelhos FC-51.
 - **Conexões principais:** Alimentados com 3.3V gerados pelo próprio ESP32, possuem suas saídas de sinal conectadas diretamente aos pinos de leitura do microcontrolador (GPIOs 34, 35, 36 e 39).
-- **Justificativa:** O sistema foi atualizado de três para quatro sensores. Esse arranjo expande o campo de percepção do micromouse, permitindo configurações mais robustas (como o uso de dois sensores frontais para alinhamento perpendicular perfeito com a parede da frente, além dos sensores laterais). Isso aumenta significativamente a confiabilidade do algoritmo de *wall-following* em altas velocidades e a precisão nas tomadas de decisão nos cruzamentos do labirinto.
+- **Justificativa:** O sistema foi atualizado de três para quatro sensores. Esse arranjo expande o campo de percepção do micromouse, permitindo configurações mais robustas (como o uso de um sensor frontal para identificação da parede da frente, um sensor traseiro para a inversão da "frente" do robô para que não seja necessário o robô girar em torno do próprio eixo z no caso de uma célula sem saída, além dos sensores laterais). Isso aumenta significativamente a confiabilidade do algoritmo de *wall-following* em altas velocidades e a precisão nas tomadas de decisão nos cruzamentos do labirinto.
 
 ### 5. Sensor de corrente e tensão (gerenciamento de energia)
 - **Componentes:** Módulo INA219.
