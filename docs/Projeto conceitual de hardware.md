@@ -80,3 +80,32 @@ A tabela a seguir descreve a alocação dos pinos do módulo ESP32 (ESP-WROOM-32
 | **TX2** | GPIO17 | Atuação (Ponte H) | Sinal de controle (IN2) para o motor A na Mini Ponte H. |
 | **D18** | GPIO18 | Atuação (Ponte H) | Sinal de controle (IN3) para o motor B na Mini Ponte H. |
 | **D19** | GPIO19 | Atuação (Ponte H) | Sinal de controle (IN4) para o motor B na Mini Ponte H. |
+
+## Referências e _Datasheets_
+
+Abaixo estão listadas as referências técnicas, os _datasheets_ e os materiais de apoio dos principais componentes utilizados na construção deste projeto:
+
+1. **Microcontrolador (ESP32)**
+   * Espressif Systems. _ESP-WROOM-32 Datasheet_. 
+   * Disponível em: [AllDatasheet - ESP-WROOM-32](https://www.alldatasheet.com/datasheet-pdf/view/1179101/ESPRESSIF/ESP-WROOM-32.html)
+
+2. **Regulador de Tensão Linear (LM7805)**
+   * Texas Instruments. _LM7805 3-Terminal 1A Positive Voltage Regulator_.
+   * Disponível em: [AllDatasheet - LM7805](https://www.alldatasheet.com/datasheet-pdf/view/838007/TI1/LM7805.html)
+
+3. **Sensor de Tensão e Corrente (INA219)**
+   * Texas Instruments. _INA219 Zero-Drift, Bidirectional Current/Power Monitor with I2C Interface_.
+   * Disponível em: [AllDatasheet - INA219](https://www.alldatasheet.com/datasheet-pdf/view/249609/TI/INA219.html)
+
+4. **Sensores de Obstáculo Infravermelho (FC-51)**
+   * _Datasheet_ do módulo comparador LM393 e sensor reflexivo infravermelho (FC-51).
+   * Disponível em: [Scribd - FC-51](https://www.scribd.com/document/432501798/FC-51)
+
+5. **_Driver_ de Motor (Mini Ponte H / MX1508)**
+   * _MX1508 DC Motor Driver Pinout & Features_.
+   * Disponível em: [Components101 - MX1508](https://components101.com/modules/mx1508-dc-motor-driver-pinout-features-datasheet)
+
+6. **Motores DC com _Encoder_ (N20)**
+   * Referência prática de pinagem, montagem e uso de motores N20 com _encoders_ de quadratura integrados.
+   * DreamWorks. _"n20 encoder motor with arduino"_. 
+   * Disponível em: [YouTube - Canal DreamWorks](https://www.youtube.com/watch?v=hU2ykoFz3f0)
