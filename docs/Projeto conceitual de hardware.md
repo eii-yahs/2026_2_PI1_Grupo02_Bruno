@@ -28,7 +28,7 @@
 
 ### 3. Driver de motor e locomoção
 - **Componentes:** Módulo mini ponte H (MX1508) e dois motores DC com *encoders* integrados.
-- **Conexões principais:** A Mini Ponte H é alimentada diretamente pelos 8.4V da bateria. O ESP32 envia sinais de controle para os pinos de entrada (IN1 a IN4), e o *driver* entrega a potência correspondente para as saídas dos motores (OUT1 a OUT4). 
+- **Conexões principais:** A Mini ponte H é alimentada diretamente pelos 8.4V da bateria. O ESP32 envia sinais de controle para os pinos de entrada (IN1 a IN4), e o *driver* entrega a potência correspondente para as saídas dos motores (OUT1 a OUT4). 
 - **Justificativa:** A substituição do volumoso L298N tradicional pela Mini Ponte H foi uma decisão de otimização de espaço e peso. Em competições de micromouse, reduzir a massa e o tamanho da placa aumenta consideravelmente a agilidade e a relação peso/potência do robô. Embora tenha exigido a adição do regulador LM7805 externo, a Mini Ponte H é muito mais eficiente e perfeitamente dimensionada para a corrente exigida pelos micro motores DC do projeto.
 
 ### 4. Sensores IR (sistema de percepção)
@@ -42,11 +42,11 @@
 - **Justificativa:** Implementar o INA219 permite ao robô monitorar ativamente o seu próprio consumo elétrico e a tensão da bateria LiPo 2S. Isso é crucial para evitar descargas profundas (que danificam irreversivelmente baterias de lítio) e para garantir que o desempenho dos motores — que cai conforme a tensão da bateria diminui — possa ser dinamicamente compensado via *software* através do controle PID.
 
 ### 6. Motores DC com *encoders* (atuação e odometria)
-- **Componentes:** Motores DC com caixa de redução e *encoders* de quadratura integrados (canais A e B).
+- **Componentes:** Motores DC (N20) com caixa de redução e *encoders* de quadratura integrados (canais A e B).
 - **Conexões principais:** Os terminais de potência dos motores são conectados diretamente às saídas da Mini Ponte H. Os pinos de sinal dos *encoders* são conectados aos pinos GPIO do ESP32 configurados com interrupção, recebendo alimentação lógica adequada.
 - **Justificativa:** A utilização de motores com *encoders* integrados é vital para o controle de malha fechada. Operar em malha aberta resultaria em trajetórias tortas devido a diferenças de atrito no chão, desgastes na caixa de redução e flutuações na tensão da bateria. Os *encoders* fornecem o *feedback* exato de deslocamento e velocidade de cada roda (odometria), alimentando o algoritmo PID. Além de garantir retas perfeitas e giros exatos de 90° ou 180°, essa odometria permite contar exatamente quantas células do labirinto foram atravessadas, sendo o mecanismo principal para o robô identificar a célula de parada (a quina diagonalmente oposta).
 
 ### 7. Chave liga/desliga e capacitores de filtro (estabilidade e segurança)
-- **Componentes:** Chave interruptora mecânica (*switch*), capacitores para o regulador (ex: 0.47µF e 100nF) e capacitores de desacoplamento das placas.
-- **Conexões principais:** A chave (*switch*) está conectada logo após o terminal positivo da bateria (8.4V), servindo de ponte para o restante do circuito e para a medição no INA219. Os capacitores estão alocados nas entradas e saídas do LM7805 e próximos ao ESP32.
+- **Componentes:** Chave interruptora mecânica (*switch*) e capacitores para o regulador (ex: 0.47µF e 100nF).
+- **Conexões principais:** A chave (*switch*) está conectada logo após o terminal VIN- do INA219, servindo de ponte para o restante do circuito e para a medição no INA219. Os capacitores estão alocados nas entradas e saídas do LM7805 e próximos ao ESP32.
 - **Justificativa:** A chave mecânica permite ligar e desligar o robô rapidamente de forma segura, prevenindo desgastes dos conectores da bateria e garantindo que a partida do robô no labirinto seja controlada. Os capacitores são críticos para a estabilidade do regulador LM7805 e para a filtragem geral (*bypass*). Como os motores DC geram ruído elétrico severo e demandam picos de corrente ao arrancar ou inverter o sentido, os capacitores absorvem essas oscilações e filtram as altas frequências. Sem eles, o ruído da ponte H invadiria a alimentação lógica, causando travamentos e reinicializações indesejadas no ESP32.
