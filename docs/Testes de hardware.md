@@ -11,6 +11,16 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
 ## 2. Sistema sensorial (posição, odometria e telemetria)
 
 Este tópico documenta a arquitetura de percepção do **Micromouse**, detalhando a aquisição, o tratamento e a transmissão de dados dos sensores infravermelhos (detecção de paredes), encoders magnéticos (velocidade e distância) e do módulo INA219 (tensão e corrente).
@@ -261,6 +271,17 @@ A demonstração tem como objetivo registrar o progresso do projeto e apresentar
 https://github.com/user-attachments/assets/1e8d90ab-a7ef-4162-961d-9c9f254efaf5
 
 >
+
+
+
+
+
+
+
+
+
+
+
 
 
 
