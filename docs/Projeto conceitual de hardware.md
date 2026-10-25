@@ -45,7 +45,7 @@
 
 ### 8. Componentes adicionais
 - **Placa perfurada:** Utilizada para soldagem e conexão dos componentes;
-- **Barra pinos fêmea:** Utilizada para encaixe dos módulos de ESP32, ponte-h mini e INA219 para que não aja necessidade de dessoldagem de componentes da placa;
+- **Barra pinos fêmea:** Utilizada para encaixe dos módulos de ESP32, ponte-h mini e INA219 para que não haja necessidade de dessoldagem de componentes da placa;
 - **Conector XT30 macho:** Utilizado para conexão da bateria com o sistema;
 - **Jumpers:** Utilizados para conexões;
 
