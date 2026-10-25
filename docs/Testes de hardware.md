@@ -272,6 +272,85 @@ https://github.com/user-attachments/assets/1e8d90ab-a7ef-4162-961d-9c9f254efaf5
 
 >
 
+## 3. Armazenamento de Dados
+
+O sistema de armazenamento do **Micromouse** utiliza exclusivamente a memória interna da ESP32, dispensando o uso de dispositivos externos, como cartões SD ou pendrives.
+
+Como o robô realiza a navegação de maneira autônoma e processa as informações dos sensores em tempo de execução, não há necessidade de manter um histórico permanente das leituras.
+
+### 3.1. Armazenamento de Dados Básicos
+
+Os dados utilizados pelo sistema são armazenados temporariamente na memória RAM da ESP32, por meio de variáveis globais definidas no código.
+
+Entre as principais informações armazenadas estão:
+
+- **Leituras dos sensores infravermelhos:** valores analógicos dos sensores frontal, traseiro, esquerdo e direito, armazenados nas variáveis `rawF`, `rawT`, `rawE` e `rawD`.
+- **Estado de detecção de paredes:** variáveis booleanas `paredeF`, `paredeT`, `paredeE` e `paredeD`, que indicam a presença ou ausência de obstáculos.
+- **Dados dos encoders:** contadores `ticksE` e `ticksD`, responsáveis por registrar os pulsos dos motores e permitir a estimativa dos deslocamentos.
+- **Estado de navegação:** variáveis como `rodando`, `frenteInvertida` e `ultimaAcao`, utilizadas para controlar o comportamento do robô.
+
+Essas informações são atualizadas durante a execução do programa e permanecem disponíveis enquanto a ESP32 estiver em funcionamento.
+
+Como os dados são mantidos em memória volátil, eles são perdidos quando o dispositivo é desligado ou reiniciado.
+
+### 3.2. Armazenamento e Validação dos Dados dos Sensores
+
+As leituras dos sensores são armazenadas temporariamente em variáveis e processadas antes de serem utilizadas pelo algoritmo de navegação.
+
+No caso dos sensores infravermelhos, os valores analógicos são obtidos por meio da função `analogRead()`:
+
+```cpp
+rawE = analogRead(IR_ESQ);
+rawF = analogRead(IR_FRENTE);
+rawD = analogRead(IR_DIR);
+rawT = analogRead(IR_TRAS);
+```
+
+Em seguida, os valores são comparados com um limiar previamente definido:
+
+```cpp
+paredeE = rawE > LIMITE_PAREDE;
+paredeF = rawF > LIMITE_PAREDE;
+paredeD = rawD > LIMITE_PAREDE;
+paredeT = rawT > LIMITE_PAREDE;
+```
+
+Esse processamento transforma os valores analógicos em informações booleanas, permitindo que o sistema identifique a presença ou ausência de paredes.
+
+Para os encoders, os pulsos registrados são armazenados em contadores do tipo `volatile long`, atualizados por interrupções de hardware.
+
+```cpp
+volatile long ticksE = 0;
+volatile long ticksD = 0;
+```
+
+Esses valores são utilizados para estimar os deslocamentos das rodas e realizar a correção proporcional de velocidade dos motores.
+
+A validação das leituras é realizada por meio da comparação com os parâmetros de referência definidos no código. Entretanto, o sistema ainda não implementa mecanismos mais avançados de validação, como filtros digitais, detecção de leituras inconsistentes ou armazenamento de históricos para análise posterior.
+
+### 3.3. Disponibilização dos Dados para Telemetria
+
+Embora os dados não sejam armazenados permanentemente, o sistema permite sua visualização por meio de uma interface web hospedada na própria ESP32.
+
+A função `enviarDados()` organiza as informações em formato JSON e as disponibiliza por meio do servidor HTTP.
+
+O navegador solicita periodicamente os dados, permitindo acompanhar:
+
+- Leituras dos quatro sensores infravermelhos;
+- Estado de detecção das paredes;
+- Orientação atual do robô;
+- Ação executada pelo algoritmo de navegação;
+- Tensão e corrente medidas pelo INA219.
+
+A interface funciona como uma ferramenta de monitoramento em tempo de execução, sem realizar o registro permanente das informações.
+
+### 3.4. Considerações sobre o Armazenamento
+
+A utilização exclusiva da memória RAM simplifica a arquitetura do sistema, reduzindo a quantidade de componentes necessários e evitando operações de escrita em dispositivos externos.
+
+Essa abordagem é adequada à estratégia de navegação adotada, baseada no seguimento de paredes, pois o algoritmo utiliza principalmente as informações atuais dos sensores para determinar os movimentos.
+
+Como possibilidade de desenvolvimento futuro, poderá ser implementado o armazenamento de históricos de leituras e eventos de navegação na memória não volátil da ESP32, permitindo análises posteriores do comportamento do robô.
 
 
 
@@ -287,9 +366,13 @@ https://github.com/user-attachments/assets/1e8d90ab-a7ef-4162-961d-9c9f254efaf5
 
 
 
-> 3. Armazenamento (memória interna, cartão SD, pendrive etc.):
->    - Armazenar dados básicos;
->    - Armazenar e validar dados de sensores.
+
+
+
+
+
+
+
 > 4. Atuadores (Motores DC, relés, LEDs etc.):
 >    - Realizar acionamentos básicos;
 >    - Realizar acionamentos com base em dados de sensores;
