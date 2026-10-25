@@ -15,39 +15,50 @@ skinparam ArrowColor #475569
 skinparam ArrowFontColor #334155
 
 package "Frontend React" as frontend {
-  package "components" as components
-  package "api" as api
-  package "realtime" as realtime
-  package "models" as models
+  package "components" as components {}
+  package "pages" as pages {}
+  package "api" as api {}
+  package "realtime" as realtime {}
+  package "models" as models {}
+  package "types" as types {}
+  package "utils" as utils {}
 }
 
 package "Backend Spring Boot" as backend {
-  package "config" as config
-  package "controller" as controller
+  package "config" as config {}
+  package "controller" as controller {}
   package "dto" as dto {
-    package "mqtt" as mqttdto
-    package "websocket" as wsdto
+    package "mqtt" as mqttdto {}
+    package "rest" as restdto {}
+    package "websocket" as wsdto {}
   }
   package "service" as service {
-    package "port" as port
+    package "port" as port {}
   }
-  package "model" as model
-  package "repository" as repository
-  package "mapper" as mapper
-  package "util" as util
+  package "model" as model {}
+  package "repository" as repository {}
+  package "mapper" as mapper {}
+  package "util" as util {}
   package "adapter" as adapter {
-    package "mqtt" as mqtt
-    package "websocket" as websocket
-    package "persistence" as persistence
+    package "mqtt" as mqtt {}
+    package "websocket" as websocket {}
   }
 }
 
 components ..> api
 components ..> realtime
 components ..> models
-api ..> controller
-api ..> dto
-realtime ..> wsdto
+components ..> types
+components ..> utils
+pages ..> api
+pages ..> models
+pages ..> components
+pages ..> types
+pages ..> utils
+api ..> controller : REST
+realtime ..> websocket : STOMP
+api ..> models
+realtime ..> types
 controller ..> service
 controller ..> dto
 service ..> model
@@ -58,7 +69,6 @@ service ..> mapper
 service ..> util
 mqtt ..> service
 websocket ..> port
-persistence ..> repository
 config ..> adapter
 
 @enduml

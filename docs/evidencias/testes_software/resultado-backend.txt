@@ -1,0 +1,41 @@
+Rato Cego — execução dos testes do backend
+Comando: cd src/backend && ./mvnw verify
+Ambiente: Java 21; Spring Boot 4.1.1; JUnit Jupiter; Mockito; JaCoCo 0.8.13
+Resultado Maven: BUILD SUCCESS
+Verificações JaCoCo: All coverage checks have been met.
+
+Classe;Testes;Falhas;Erros;Ignorados
+MqttConnectionHealthIndicatorTest;4;0;0;0
+MqttListenersTest;2;0;0;0
+MqttMessagePublisherAdapterTest;2;0;0;0
+MqttTelemetryWebSocketFlowTest;1;0;0;0
+WebSocketConfigTest;2;0;0;0
+WebSocketHeartbeatTest;3;0;0;0
+WebSocketTelemetryAdapterTest;1;0;0;0
+WebSocketUpdateEventListenerTest;1;0;0;0
+WebSocketUpdateTransactionTest;2;0;0;0
+MqttConfigTest;1;0;0;0
+RunControllerTest;14;0;0;0
+RunEventPayloadValidationTest;3;0;0;0
+TelemetrySamplePayloadValidationTest;2;0;0;0
+RunMapperTest;4;0;0;0
+TelemetryMapperTest;1;0;0;0
+ModelEnumTest;1;0;0;0
+RunStatusTest;3;0;0;0
+RunLifecycleServiceTest;17;0;0;0
+RunQueryServiceTest;10;0;0;0
+TelemetryServiceTest;10;0;0;0
+MqttPayloadParserTest;4;0;0;0
+
+Totais: tests=88, failures=0, errors=0, skipped=0
+
+Cobertura JaCoCo (todo o backend):
+Contador;Cobertos;Não cobertos;Percentual
+INSTRUCTION;2561;418;85.97%
+BRANCH;124;51;70.86%
+LINE;514;96;84.26%
+COMPLEXITY;177;59;75.00%
+METHOD;130;15;89.66%
+CLASS;45;4;91.84%
+
+RunStatus: 22/22 linhas e 12/12 desvios cobertos.

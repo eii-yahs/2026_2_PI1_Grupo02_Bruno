@@ -75,13 +75,6 @@ export function ExecutionControls({ maze, result, onMazeChange, onPrepare, busy,
         >
           <Icon name="stop" /> <span className="button-label">Interromper</span>
         </button>
-        <button
-          className={`${buttonBase} border-[#4a4e48] bg-[#292c29] text-[#d0d0c8] hover:border-[#777b70] hover:bg-[#333733]`}
-          disabled
-          title="Aguardando integração do controle de execução com o backend"
-        >
-          <Icon name="refresh" /> <span className="button-label">Reiniciar</span>
-        </button>
       </div>
       {notice && <p className="basis-full -mt-1 mb-0 text-small text-amber" role="status">{notice}</p>}
     </section>

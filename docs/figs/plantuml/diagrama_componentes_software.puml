@@ -1,7 +1,7 @@
 @startuml
 !pragma layout smetana
 title Diagrama de componentes da solução de software
-left to right direction
+top to bottom direction
 skinparam componentStyle uml2
 skinparam linetype ortho
 skinparam shadowing false
@@ -31,15 +31,18 @@ package "Aplicação de software local" {
   package "Backend — Spring Boot" {
     component "RunController\nAPI REST" as rest
     component "RunLifecycleService\nCiclo da execução" as lifecycle
+    component "RunQueryService\nConsultas REST" as query
     component "TelemetryService\nProcessamento de telemetria" as telemetry
     component "MqttRunListener" as runlistener
     component "MqttTelemetryListener" as telemlistener
     component "MqttMessagePublisherAdapter" as mqttpublisher
+    component "MqttCommandPublicationListener\nAFTER_COMMIT" as commandlistener
+    component "MqttCommandPublicationRequested\nSpring application event" as commandevent
     component "WebSocketTelemetryAdapter" as wsadapter
     component "WebSocketUpdateEventListener\nAFTER_COMMIT" as wslistener
     component "WebSocketUpdateEvent\nSpring application event" as updateevent
     component "RunRepository\nTelemetrySampleRepository" as repositories
-    component "TelemetryMapper\nMqttPayloadParser" as parsing
+    component "RunMapper / TelemetryMapper\nMqttPayloadParser" as parsing
     interface "MessagePublisher" as messageport
     interface "TelemetryPublisher" as telemetryport
   }
@@ -49,15 +52,20 @@ package "Aplicação de software local" {
 
 frontend --> rest : REST
 rest --> lifecycle
+rest --> query
 runlistener --> lifecycle
 telemlistener --> telemetry
 broker --> runlistener : MQTT eventos de ciclo
 broker --> telemlistener : MQTT telemetria
 robot <--> broker : MQTT
-lifecycle ..> messageport
+lifecycle ..> commandevent : solicita publicação
+commandevent --> commandlistener : AFTER_COMMIT
+commandlistener ..> messageport
 mqttpublisher ..|> messageport
 mqttpublisher --> broker : MQTT comandos
 lifecycle --> repositories
+query --> repositories
+query ..> parsing
 telemetry --> repositories
 repositories --> database : Spring Data JPA
 telemetry ..> parsing

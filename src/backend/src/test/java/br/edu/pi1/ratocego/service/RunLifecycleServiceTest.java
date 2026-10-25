@@ -3,6 +3,7 @@ package br.edu.pi1.ratocego.service;
 import br.edu.pi1.ratocego.dto.mqtt.RunFinishedPayload;
 import br.edu.pi1.ratocego.dto.mqtt.RunInterruptedPayload;
 import br.edu.pi1.ratocego.dto.mqtt.RunStartedPayload;
+import br.edu.pi1.ratocego.dto.mqtt.InterruptRunCommand;
 import br.edu.pi1.ratocego.dto.websocket.RunCommandStatusUpdate;
 import br.edu.pi1.ratocego.model.Run;
 import br.edu.pi1.ratocego.model.RunStatus;
@@ -14,14 +15,18 @@ import org.springframework.context.ApplicationEventPublisher;
 import tools.jackson.databind.ObjectMapper;
 import br.edu.pi1.ratocego.model.MazeType;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneOffset;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -40,7 +45,7 @@ class RunLifecycleServiceTest {
         runs = mock(RunRepository.class);
         events = mock(ApplicationEventPublisher.class);
         objectMapper = mock(ObjectMapper.class);
-        service = new RunLifecycleService(parser, runs, events, objectMapper, "ratocego/");
+        service = new RunLifecycleService(parser, runs, events, objectMapper, "ratocego/", Clock.systemUTC());
     }
 
     @Test
@@ -103,6 +108,102 @@ class RunLifecycleServiceTest {
         var event = org.mockito.ArgumentCaptor.forClass(WebSocketUpdateEvent.class);
         verify(events).publishEvent(event.capture());
         assertTrue(((RunCommandStatusUpdate) event.getValue().update()).retryAllowed());
+    }
+
+    @Test
+    void doesNotInterruptBeforeTenMinutesFromConfirmedStart() {
+        Instant now = Instant.parse("2026-10-25T12:10:00Z");
+        useFixedClock(now);
+        Run run = activeRun(now.minusSeconds(600).plusNanos(1), RunStatus.IN_PROGRESS);
+        run.setStartRequestedAt(now.minusSeconds(900));
+        when(runs.findByStatusIn(any())).thenReturn(java.util.List.of(run));
+
+        service.processCommandTimeouts();
+
+        assertEquals(RunStatus.IN_PROGRESS, run.getStatus());
+        assertNull(run.getInterruptRequestedAt());
+        verify(runs, never()).save(any());
+        verify(events, never()).publishEvent(any());
+    }
+
+    @Test
+    void requestsInterruptionAtExactlyTenMinutes() throws Exception {
+        Instant now = Instant.parse("2026-10-25T12:10:00Z");
+        useFixedClock(now);
+        Run run = activeRun(now.minusSeconds(600), RunStatus.IN_PROGRESS);
+        when(runs.findByStatusIn(any())).thenReturn(java.util.List.of(run));
+        when(objectMapper.writeValueAsString(any())).thenReturn("timeout-interrupt-json");
+
+        service.processCommandTimeouts();
+
+        assertEquals(RunStatus.INTERRUPT_REQUESTED, run.getStatus());
+        assertEquals(now, run.getInterruptRequestedAt());
+        assertNull(run.getFinishedAt());
+        verify(runs).save(run);
+        var command = org.mockito.ArgumentCaptor.forClass(MqttCommandPublicationRequested.class);
+        verify(events).publishEvent(command.capture());
+        assertEquals("ratocego/commands/run/interrupt", command.getValue().topic());
+        assertEquals("timeout-interrupt-json", command.getValue().payload());
+        verify(objectMapper).writeValueAsString(org.mockito.ArgumentMatchers.argThat(payload ->
+                payload instanceof InterruptRunCommand interrupt && interrupt.runId() == 42L
+                        && interrupt.timestamp().equals(now)));
+        var event = org.mockito.ArgumentCaptor.forClass(WebSocketUpdateEvent.class);
+        verify(events).publishEvent(event.capture());
+        var update = (RunCommandStatusUpdate) event.getValue().update();
+        assertEquals(RunStatus.INTERRUPT_REQUESTED, update.status());
+        assertTrue(update.message().contains("10 minutos"));
+    }
+
+    @Test
+    void interruptsAnAlreadyExpiredPersistedRun() {
+        Instant now = Instant.parse("2026-10-25T12:15:00Z");
+        useFixedClock(now);
+        Run run = activeRun(now.minusSeconds(900), RunStatus.IN_PROGRESS);
+        when(runs.findByStatusIn(any())).thenReturn(java.util.List.of(run));
+
+        service.processCommandTimeouts();
+
+        assertEquals(RunStatus.INTERRUPT_REQUESTED, run.getStatus());
+        assertEquals(now, run.getInterruptRequestedAt());
+        verify(events).publishEvent(any(MqttCommandPublicationRequested.class));
+    }
+
+    @Test
+    void durationTimeoutWaitsForConfirmationWithoutRepublishingAndPreservesPartialData() {
+        Instant now = Instant.parse("2026-10-25T12:10:00Z");
+        useFixedClock(now);
+        Run run = activeRun(now.minusSeconds(600), RunStatus.IN_PROGRESS);
+        run.setDistanceTravelledMeters(new java.math.BigDecimal("2.70"));
+        when(runs.findByStatusIn(any())).thenReturn(java.util.List.of(run));
+        service.processCommandTimeouts();
+        clearInvocations(events);
+
+        useFixedClock(now.plusSeconds(3));
+        service.processCommandTimeouts();
+
+        assertEquals(RunStatus.INTERRUPT_REQUESTED, run.getStatus());
+        assertEquals(now, run.getInterruptRequestedAt());
+        assertNull(run.getFinishedAt());
+        verify(events, never()).publishEvent(any(MqttCommandPublicationRequested.class));
+        var warning = org.mockito.ArgumentCaptor.forClass(WebSocketUpdateEvent.class);
+        verify(events).publishEvent(warning.capture());
+        assertTrue(((RunCommandStatusUpdate) warning.getValue().update()).retryAllowed());
+
+        Instant confirmedAt = now.plusSeconds(4);
+        when(runs.findById(42L)).thenReturn(Optional.of(run));
+        when(parser.parseAndValidate("interrupted-json", RunInterruptedPayload.class))
+                .thenReturn(new RunInterruptedPayload(2, 42L, confirmedAt));
+        service.processInterrupted("interrupted-json");
+
+        assertEquals(RunStatus.INTERRUPTED, run.getStatus());
+        assertEquals(confirmedAt, run.getFinishedAt());
+        assertEquals(false, run.getChallengeCompleted());
+        assertEquals(new java.math.BigDecimal("2.70"), run.getDistanceTravelledMeters());
+    }
+
+    private void useFixedClock(Instant now) {
+        service = new RunLifecycleService(parser, runs, events, objectMapper, "ratocego/",
+                Clock.fixed(now, ZoneOffset.UTC));
     }
 
     @Test

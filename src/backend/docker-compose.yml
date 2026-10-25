@@ -23,10 +23,10 @@ services:
     command:
       - -c
       - |
-        touch /mosquitto/data/passwordfile &&
         if [ -s /mosquitto/data/passwordfile ]; then
           mosquitto_passwd -b /mosquitto/data/passwordfile "$${MQTT_USERNAME}" "$${MQTT_PASSWORD}"
         else
+          rm -f /mosquitto/data/passwordfile &&
           mosquitto_passwd -c -b /mosquitto/data/passwordfile "$${MQTT_USERNAME}" "$${MQTT_PASSWORD}"
         fi &&
         chown mosquitto:mosquitto /mosquitto/data/passwordfile &&
