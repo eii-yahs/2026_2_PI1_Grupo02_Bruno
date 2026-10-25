@@ -61,7 +61,7 @@
 
 **Figura 1.** Diagrama de blocos e esquemático elétrico do sistema de controle e navegação do micromouse.
 
-## Mapeamento de Pinos (Pinout) do microcontrolador
+## Mapeamento de pinos (pinout) do microcontrolador
 
 A tabela a seguir descreve a alocação dos pinos do módulo ESP32 (ESP-WROOM-32) utilizados no projeto, detalhando a sua respectiva função e o subsistema ao qual estão conectados, conforme definido no esquemático elétrico do robô.
 
