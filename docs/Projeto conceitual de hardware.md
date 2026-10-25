@@ -1,12 +1,6 @@
 # Projeto conceitual de _hardware_
 
-<figure>
 
-| Diagrama de blocos | Esquemático |
-|:------------------:|:-----------:|
-| <img src="Images/BLOCK_DIAGRAM.png" alt="Diagrama de blocos do micromouse" width="450"> | <img src="Images/MICRO_MOUSE_SCHEMATIC_2.png" alt="Esquemático do micromouse" width="450"> |
-
-<figcaption>
 
 **Figura 1.** Diagrama de blocos e esquemático elétrico do sistema de controle e navegação do micromouse.
 
@@ -56,6 +50,15 @@
 - **Barra pinos fêmea:** Utilizada para encaixe dos módulos de ESP32, ponte-h mini e INA219 para que não aja necessidade de dessoldagem de componentes da placa;
 - **Conector XT30 macho:** Utilizado para conexão da bateria com o sistema;
 - **Jumpers:** Utilizados para conexões;
+
+
+<figure>
+
+| Diagrama de blocos | Esquemático |
+|:------------------:|:-----------:|
+| <img src="Images/BLOCK_DIAGRAM.png" alt="Diagrama de blocos do micromouse" width="450"> | <img src="Images/MICRO_MOUSE_SCHEMATIC_2.png" alt="Esquemático do micromouse" width="450"> |
+
+<figcaption>
 
 ## Mapeamento de Pinos (Pinout) do Microcontrolador
 
