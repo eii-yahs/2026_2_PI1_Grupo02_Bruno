@@ -11,7 +11,7 @@
 ### 1. Microcontrolador
 - **Componentes:** Módulo ESP_WROOM_32 (ESP32).
 - **Conexões principais:** Recebe alimentação de 5V proveniente do regulador LM7805 e distribui sinais lógicos através dos seus pinos GPIO e barramento I2C.
-- **Justificativa:** O ESP32 foi selecionado pelo seu elevado poder de processamento. Por ser dual core, é possível que um dos cores dela seja posto a trabalhar somente aos dados de leitura e comunicação com os módulos (INA219, ponte h, encoders e sensores), enquanto o outro core dela atua com a telemetria via protocolo de comunicação MQTT, onde serão exibidos dados como porcentagem da bateria, labirinto concluído e informações adicionais relevantes do robô. Também possui vasta disponibilidade de pinos e suporte a interrupções de *hardware*. Como o objetivo do robô é chegar à célula diagonalmente oposta guiando-se pelas paredes (sem a necessidade de mapear o centro do labirinto com algoritmos complexos como o *flood fill*), a capacidade de processamento do ESP32 é totalmente direcionada para garantir um algoritmo de *wall-following* reativo e de alta velocidade. O processamento rápido, aliado às interrupções, garante leituras precisas dos *encoders* e dos sensores IR em tempo real para manter o alinhamento constante.
+- **Justificativa:** O ESP32 foi selecionado pelo seu elevado poder de processamento. Por ser dual core, é possível que um dos cores seja posto a trabalhar somente aos dados de leitura e comunicação com os módulos (INA219, ponte h, encoders e sensores), enquanto o outro core lida com a telemetria via protocolo de comunicação MQTT, onde serão exibidos dados como porcentagem da bateria, labirinto concluído e informações adicionais relevantes do robô no software. Também possui vasta disponibilidade de pinos e suporte a interrupções de *hardware*. Como o objetivo do robô é chegar à célula diagonalmente oposta guiando-se pelas paredes (sem a necessidade de mapear o centro do labirinto com algoritmos complexos como o *flood fill*), a capacidade de processamento do ESP32 é totalmente direcionada para garantir um algoritmo de *wall-following* reativo e de alta velocidade. O processamento rápido, aliado às interrupções, garante leituras precisas dos *encoders* e dos sensores IR em tempo real para manter o alinhamento constante.
 
 ### 2. Regulador de tensão (alimentação lógica)
 - **Componentes:** Regulador de tensão linear LM7805.
@@ -45,7 +45,7 @@
 
 ### 8. Componentes adicionais
 - **Placa perfurada:** Utilizada para soldagem e conexão dos componentes;
-- **Barra pinos fêmea:** Utilizada para encaixe dos módulos de ESP32, ponte-h mini e INA219 para que não aja necessidade de dessoldagem de componentes da placa;
+- **Barra pinos fêmea:** Utilizada para encaixe dos módulos de ESP32, ponte-h mini e INA219 para que não haja necessidade de dessoldagem de componentes da placa;
 - **Conector XT30 macho:** Utilizado para conexão da bateria com o sistema;
 - **Jumpers:** Utilizados para conexões;
 
