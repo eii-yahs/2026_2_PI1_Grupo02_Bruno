@@ -5,7 +5,10 @@ import br.edu.pi1.ratocego.dto.rest.TelemetrySampleResponse;
 import br.edu.pi1.ratocego.model.Heading;
 import br.edu.pi1.ratocego.model.MazeType;
 import br.edu.pi1.ratocego.model.RunStatus;
+import br.edu.pi1.ratocego.model.Run;
 import br.edu.pi1.ratocego.service.RunQueryService;
+import br.edu.pi1.ratocego.service.RunLifecycleService;
+import br.edu.pi1.ratocego.mapper.RunMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -25,6 +28,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -36,6 +41,63 @@ class RunControllerTest {
 
     @MockitoBean
     private RunQueryService runQueryService;
+
+    @MockitoBean
+    private RunLifecycleService runLifecycleService;
+
+    @MockitoBean
+    private RunMapper runMapper;
+
+    @Test
+    void startRunCreatesAPendingExecution() throws Exception {
+        Run run = new Run();
+        run.setId(17L);
+        run.setStatus(RunStatus.START_REQUESTED);
+        when(runLifecycleService.start(MazeType.GRID_8X4)).thenReturn(run);
+        when(runMapper.toRunResponse(run)).thenReturn(RunResponse.builder().id(17).status(RunStatus.START_REQUESTED).build());
+
+        mockMvc.perform(post("/api/runs").contentType(APPLICATION_JSON).content("{\"mazeType\":\"GRID_8X4\"}"))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.id").value(17))
+                .andExpect(jsonPath("$.status").value("START_REQUESTED"));
+    }
+
+    @Test
+    void startRunRejectsMissingMazeType() throws Exception {
+        mockMvc.perform(post("/api/runs").contentType(APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(runLifecycleService, never()).start(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void startRunReturnsConflictWhenAnotherExecutionIsActive() throws Exception {
+        when(runLifecycleService.start(MazeType.GRID_4X4)).thenThrow(new IllegalStateException("A run is already active"));
+
+        mockMvc.perform(post("/api/runs").contentType(APPLICATION_JSON).content("{\"mazeType\":\"GRID_4X4\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void interruptRunReturnsNotFoundForUnknownRun() throws Exception {
+        when(runLifecycleService.interrupt(99L)).thenThrow(new IllegalArgumentException("No run found for runId=99"));
+
+        mockMvc.perform(post("/api/runs/99/interrupt"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void activeRunEndpointReturnsCurrentExecutionOrNotFound() throws Exception {
+        when(runQueryService.findActiveRun()).thenReturn(Optional.of(
+                RunResponse.builder().id(17).status(RunStatus.IN_PROGRESS).build()));
+        mockMvc.perform(get("/api/runs/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(17));
+
+        when(runQueryService.findActiveRun()).thenReturn(Optional.empty());
+        mockMvc.perform(get("/api/runs/active"))
+                .andExpect(status().isNotFound());
+    }
 
     @Test
     void getAllRunsReturnsStoredRunsFromDifferentMazesAsJson() throws Exception {

@@ -88,10 +88,21 @@ class MicromouseSimulator:
             self.event_id += 1
             return self.event_id
 
-    def publish(self, topic: str, payload: dict) -> None:
+    def publish(self, topic: str, payload: dict, confirm: bool = False) -> bool:
         info = self.client.publish(topic, json.dumps(payload, separators=(",", ":")), qos=1, retain=False)
         if info.rc != mqtt.MQTT_ERR_SUCCESS:
             print(f"[mqtt] publicação falhou em {topic}: {info.rc}", flush=True)
+            return False
+        if confirm:
+            try:
+                info.wait_for_publish(timeout=5)
+                if not info.is_published():
+                    print(f"[mqtt] confirmação não recebida em {topic} após 5 s", flush=True)
+                    return False
+            except (RuntimeError, ValueError) as error:
+                print(f"[mqtt] não foi possível confirmar publicação em {topic}: {error}", flush=True)
+                return False
+        return True
 
     def on_connect(self, client: mqtt.Client, _userdata, _flags, reason_code, _properties) -> None:
         if reason_code.is_failure:
@@ -162,14 +173,15 @@ class MicromouseSimulator:
         rows, columns = MAZES[run["mazeType"]]
         path = serpentine_path(rows, columns)
         started = time.monotonic()
-        self.publish(self.topic(f"runs/{run_id}/started"), {
+        started_confirmed = self.publish(self.topic(f"runs/{run_id}/started"), {
             "eventId": self.next_event_id(),
             "runId": run_id,
             "timestamp": utc_now(),
             "mazeRows": rows,
             "mazeColumns": columns,
-        })
-        print(f"[run {run_id}] iniciado: {run['mazeType']} ({rows}x{columns})", flush=True)
+        }, confirm=True)
+        start_note = "" if started_confirmed else " (evento inicial não confirmado pelo broker)"
+        print(f"[run {run_id}] iniciado: {run['mazeType']} ({rows}x{columns}){start_note}", flush=True)
 
         interval = self.args.sample_interval
         cell_length = self.args.cell_length
@@ -208,19 +220,23 @@ class MicromouseSimulator:
                 next_sample = time.monotonic() + interval
 
         if run["stop"].is_set():
-            self.publish(self.topic(f"runs/{run_id}/interrupted"), {
+            interrupt_confirmed = self.publish(self.topic(f"runs/{run_id}/interrupted"), {
                 "eventId": self.next_event_id(), "runId": run_id, "timestamp": utc_now(),
-            })
-            print(f"[run {run_id}] interrupção confirmada", flush=True)
+            }, confirm=True)
+            note = "confirmada pelo broker" if interrupt_confirmed else "solicitada, sem confirmação do broker"
+            print(f"[run {run_id}] interrupção {note}", flush=True)
         else:
-            self.publish(self.topic(f"runs/{run_id}/finished"), {
+            finished_confirmed = self.publish(self.topic(f"runs/{run_id}/finished"), {
                 "eventId": self.next_event_id(),
                 "runId": run_id,
                 "timestamp": utc_now(),
                 "status": "COMPLETED",
                 "challengeCompleted": True,
-            })
-            print(f"[run {run_id}] concluído; {sequence} amostras enviadas", flush=True)
+            }, confirm=True)
+            if finished_confirmed:
+                print(f"[run {run_id}] concluído; evento confirmado pelo broker; {sequence} amostras enviadas", flush=True)
+            else:
+                print(f"[run {run_id}] execução terminou, mas o evento de conclusão não foi confirmado pelo broker", flush=True)
 
         with self.lock:
             if self.active_run is run:

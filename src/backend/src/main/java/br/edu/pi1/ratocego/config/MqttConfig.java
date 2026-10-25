@@ -34,6 +34,7 @@ public class MqttConfig {
 
     @Bean
     MqttPahoClientFactory mqttClientFactory(
+            @Value("${app.mqtt.server-uri}") String brokerUri,
             @Value("${app.mqtt.username}") String username,
             @Value("${app.mqtt.password}") String password,
             @Value("${app.mqtt.connection-timeout-seconds:10}") int connectionTimeoutSeconds,
@@ -41,6 +42,7 @@ public class MqttConfig {
             @Value("${app.mqtt.automatic-reconnect:true}") boolean automaticReconnect) {
 
         var options = new MqttConnectOptions();
+        options.setServerURIs(new String[] { brokerUri });
         options.setUserName(username);
         options.setPassword(password.toCharArray());
         options.setConnectionTimeout(connectionTimeoutSeconds);

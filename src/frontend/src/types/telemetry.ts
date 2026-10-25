@@ -17,3 +17,6 @@ export type RunResult =
   | 'Aguardando'
   | 'Não concluído'
   | 'Resultado indisponível'
+  | 'Início solicitado'
+  | 'Interrupção solicitada'
+  | 'Falhou'

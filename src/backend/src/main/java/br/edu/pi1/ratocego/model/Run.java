@@ -6,6 +6,9 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.SequenceGenerator;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,6 +24,8 @@ import java.time.Instant;
 public class Run {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "runs_id_generator")
+    @SequenceGenerator(name = "runs_id_generator", sequenceName = "runs_id_seq", allocationSize = 1)
     private Long id;
 
     @Enumerated(EnumType.STRING)
@@ -29,6 +34,9 @@ public class Run {
 
     private Instant startedAt;
     private Instant finishedAt;
+    private Instant startRequestedAt;
+    private Instant interruptRequestedAt;
+    private boolean interruptTimeoutWarned;
     private Integer mazeRows;
     private Integer mazeColumns;
     private Boolean challengeCompleted;

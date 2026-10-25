@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { lazy, Suspense, useEffect, useState } from 'react'
 import App from './App.tsx'
-import { GeneralQueryPage } from './pages/GeneralQueryPage.tsx'
-import { MazeQueryPage } from './pages/MazeQueryPage.tsx'
+
+const GeneralQueryPage = lazy(() => import('./pages/GeneralQueryPage.tsx').then(({ GeneralQueryPage }) => ({ default: GeneralQueryPage })))
+const MazeQueryPage = lazy(() => import('./pages/MazeQueryPage.tsx').then(({ MazeQueryPage }) => ({ default: MazeQueryPage })))
 
 // Navegação por hash: #consulta-geral abre a consulta geral, #consulta-por-labirinto/GRID_4X4 a consulta
 // por labirinto; qualquer outro valor abre o monitoramento.
@@ -21,7 +22,9 @@ export function Root() {
 
   return <>
     <div hidden={showGeneralQuery || showMazeQuery}><App /></div>
-    {showGeneralQuery && <GeneralQueryPage hash={hash} />}
-    {showMazeQuery && <MazeQueryPage hash={hash} />}
+    <Suspense fallback={<p className="p-4 text-muted" role="status">Carregando consulta…</p>}>
+      {showGeneralQuery && <GeneralQueryPage hash={hash} />}
+      {showMazeQuery && <MazeQueryPage hash={hash} />}
+    </Suspense>
   </>
 }

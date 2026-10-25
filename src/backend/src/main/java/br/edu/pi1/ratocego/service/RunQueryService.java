@@ -4,6 +4,7 @@ import br.edu.pi1.ratocego.dto.rest.RunResponse;
 import br.edu.pi1.ratocego.dto.rest.TelemetrySampleResponse;
 import br.edu.pi1.ratocego.mapper.RunMapper;
 import br.edu.pi1.ratocego.model.MazeType;
+import br.edu.pi1.ratocego.model.RunStatus;
 import br.edu.pi1.ratocego.repository.RunRepository;
 import br.edu.pi1.ratocego.repository.TelemetrySampleRepository;
 import org.springframework.data.domain.Sort;
@@ -36,6 +37,13 @@ public class RunQueryService {
         return runRepository.findAll(OLDEST_FIRST).stream()
                 .map(runMapper::toRunResponse)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<RunResponse> findActiveRun() {
+        return runRepository.findFirstByStatusInOrderByIdDesc(
+                        List.of(RunStatus.START_REQUESTED, RunStatus.IN_PROGRESS, RunStatus.INTERRUPT_REQUESTED))
+                .map(runMapper::toRunResponse);
     }
 
     // Execuções de um tipo de labirinto, identificado pelas dimensões gravadas na execução

@@ -1,27 +1,28 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { ArrowRight } from 'lucide-react'
 import { fetchRun, fetchRunTelemetry, fetchRuns } from '../api/runs'
 import { AppHeader } from '../components/AppHeader'
 import { LineChart, type ChartPoint } from '../components/LineChart'
 import { MazeBoard } from '../components/MazeBoard'
+import { QueryRefreshButton } from '../components/QueryRefreshButton'
 import {
   challengeLabel, durationSeconds, formatDateTime, formatDuration, matchesSearch, mazeLabel, statusLabels, summarizeRuns, withUnit,
   type Run, type RunStatus, type TelemetrySample,
 } from '../models/run'
 import { mazeOptions } from '../types/maze'
 import { formatNumber } from '../utils/format'
-import '../App.css'
 import {
-  breadcrumbClass, chartsClass, countClass, fieldClass, filtersClass, tableClass, tableWrapClass, viewLinkClass,
+  breadcrumbClass, chartsClass, countClass, eyebrowClass, fieldClass, filtersClass, monoClass, pageContentClass,
+  pageShellClass, panelClass, tableClass, tableWrapClass, viewLinkClass,
 } from './queryClasses'
-
-const mazeLinkClass = 'inline-flex min-h-10 items-center rounded-(--radius-control) border border-[#1e6a74] bg-[#0c1520] px-3 font-(family-name:--mono) text-(length:--text-small) leading-[normal] whitespace-nowrap text-(--cyan) no-underline hover:border-(--cyan) hover:bg-[#0f2430]'
+const mazeLinkClass = 'inline-flex min-h-10 items-center gap-2 rounded-[3px] border border-[#555b50] bg-surface-low px-3 font-mono text-small leading-[normal] whitespace-nowrap text-cyan no-underline hover:border-cyan hover:bg-surface-raised'
 const statusClasses: Record<RunStatus, string> = {
-  START_REQUESTED: 'bg-[#223143] text-[#b4c3d1]',
-  IN_PROGRESS: 'bg-[#223143] text-[#b4c3d1]',
-  INTERRUPT_REQUESTED: 'bg-[#223143] text-[#b4c3d1]',
-  COMPLETED: 'bg-[#123228] text-[#8ce2b9]',
-  FAILED: 'bg-[#3a2026] text-[#f2b4b6]',
-  INTERRUPTED: 'bg-[#3a2026] text-[#f2b4b6]',
+  START_REQUESTED: 'bg-surface-raised text-secondary',
+  IN_PROGRESS: 'bg-[#302a20] text-amber',
+  INTERRUPT_REQUESTED: 'bg-[#302a20] text-amber',
+  COMPLETED: 'bg-[#252b22] text-green',
+  FAILED: 'bg-[#302321] text-danger',
+  INTERRUPTED: 'bg-[#302321] text-danger',
 }
 
 type Props = { hash: string }
@@ -29,9 +30,9 @@ type Props = { hash: string }
 export function GeneralQueryPage({ hash }: Props) {
   const runId = Number(hash.split('/')[1])
   const isDetail = Number.isInteger(runId) && runId > 0
-  return <main className="app-shell">
+  return <main className={pageShellClass}>
     <AppHeader active="consulta-geral" />
-    <div className={`page-content ${isDetail ? 'pt-[26px]! pb-5!' : ''}`}>
+    <div className={`${pageContentClass} ${isDetail ? 'pt-[26px] pb-5' : ''}`}>
       {isDetail ? <RunDetail runId={runId} /> : <RunList />}
     </div>
   </main>
@@ -40,15 +41,27 @@ export function GeneralQueryPage({ hash }: Props) {
 function RunList() {
   const [runs, setRuns] = useState<Run[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(true)
   const [maze, setMaze] = useState('')
   const [status, setStatus] = useState<RunStatus | ''>('')
   const [search, setSearch] = useState('')
 
-  useEffect(() => {
-    fetchRuns()
-      .then((data) => setRuns([...data].reverse()))
-      .catch((e: Error) => setError(e.message))
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+    setError(null)
+    try {
+      const data = await fetchRuns()
+      setRuns([...data].reverse())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível atualizar as execuções.')
+    } finally {
+      setRefreshing(false)
+    }
   }, [])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
 
   const filtered = useMemo(() => (runs ?? []).filter((run) =>
     (!maze || mazeLabel(run) === maze) && (!status || run.status === status) && matchesSearch(run, search),
@@ -61,12 +74,12 @@ function RunList() {
     .map(({ run, attempt, y }) => ({ x: attempt, y, label: `Tentativa ${attempt} · #${run.id} · ${mazeLabel(run)}` }))
 
   return <>
-    <section className="page-heading">
+    <section className="mb-6 flex items-end justify-between max-[700px]:mb-[18px] max-[700px]:flex-col max-[700px]:items-start max-[700px]:gap-[14px]">
       <div>
-        <p className="eyebrow">HISTÓRICO <span>／</span> TODAS AS EXECUÇÕES</p>
-        <h1>Consulta geral</h1>
-        <p className="subheading">Histórico completo das execuções armazenadas, de todos os labirintos.</p>
+        <h1 className="m-0 font-display text-[clamp(36px,4vw,48px)] leading-[.98] font-semibold tracking-[.005em] text-text">Consulta geral</h1>
+        <p className="mt-2 mb-0 text-body text-secondary">Histórico completo das execuções armazenadas, de todos os labirintos.</p>
       </div>
+      <QueryRefreshButton refreshing={refreshing} onRefresh={() => void refresh()} />
     </section>
 
     {error && <Message error>{error}</Message>}
@@ -90,7 +103,7 @@ function RunList() {
           {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <input
-          className={`${fieldClass} min-w-0 flex-[1_1_220px] placeholder:text-(--text-muted)`}
+          className={`${fieldClass} min-w-0 flex-[1_1_220px] placeholder:text-muted`}
           type="search"
           aria-label="Buscar por ID, data ou labirinto"
           placeholder="Buscar por ID, data ou labirinto…"
@@ -100,7 +113,7 @@ function RunList() {
         <span className={countClass}>{filtered.length} de {runs.length} execuções</span>
         <nav className="flex flex-wrap gap-2" aria-label="Consulta por labirinto">
           {Object.entries(mazeOptions).map(([type, option]) => <a key={type} className={mazeLinkClass} href={`#consulta-por-labirinto/${type}`}>
-            Ver {option.label} →
+            Ver {option.label} <ArrowRight className="size-[13px] shrink-0" aria-hidden="true" />
           </a>)}
         </nav>
       </div>
@@ -130,12 +143,12 @@ function RunList() {
                 <td>{mazeLabel(run)}</td>
                 <td><StatusTag status={run.status} /></td>
                 <td>{challengeLabel(run)}</td>
-                <td className="mono">{formatDuration(run.duration)}</td>
-                <td className="mono">{withUnit(run.chargeConsumedMilliampHours, 'mAh')}</td>
-                <td className="mono">{withUnit(run.averageSpeedMetersPerSecond, 'm/s')}</td>
-                <td className="mono">{withUnit(run.distanceTravelledMeters, 'm')}</td>
+                <td className={monoClass}>{formatDuration(run.duration)}</td>
+                <td className={monoClass}>{withUnit(run.chargeConsumedMilliampHours, 'mAh')}</td>
+                <td className={monoClass}>{withUnit(run.averageSpeedMetersPerSecond, 'm/s')}</td>
+                <td className={monoClass}>{withUnit(run.distanceTravelledMeters, 'm')}</td>
                 <td>
-                  <a className={viewLinkClass} href={`#consulta-geral/${run.id}`}>ver →</a>
+                  <a className={viewLinkClass} href={`#consulta-geral/${run.id}`}>ver <ArrowRight className="size-[13px] shrink-0" aria-hidden="true" /></a>
                 </td>
               </tr>)}
             </tbody>
@@ -169,15 +182,25 @@ function RunDetail({ runId }: { runId: number }) {
   const [run, setRun] = useState<Run | null | undefined>(undefined)
   const [samples, setSamples] = useState<TelemetrySample[]>([])
   const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(true)
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+    setError(null)
+    try {
+      const found = await fetchRun(runId)
+      setSamples(found ? await fetchRunTelemetry(runId) : [])
+      setRun(found)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível atualizar a execução.')
+    } finally {
+      setRefreshing(false)
+    }
+  }, [runId])
 
   useEffect(() => {
-    fetchRun(runId)
-      .then(async (found) => {
-        setSamples(found ? await fetchRunTelemetry(runId) : [])
-        setRun(found)
-      })
-      .catch((e: Error) => setError(e.message))
-  }, [runId])
+    void refresh()
+  }, [refresh])
 
   const maze = run && run.mazeRows != null && run.mazeColumns != null
     ? { label: mazeLabel(run), rows: run.mazeRows, columns: run.mazeColumns }
@@ -193,56 +216,59 @@ function RunDetail({ runId }: { runId: number }) {
     })
 
   return <>
-    <nav className={breadcrumbClass} aria-label="Caminho">
-      <a href="#consulta-geral">Consulta geral</a>
-      {run && <><span>/</span>{mazeLabel(run)}</>}
-      <span>/</span><b>#{runId}</b>
-    </nav>
+    <div className="mb-3.5 flex flex-wrap items-center justify-between gap-2">
+      <nav className={`${breadcrumbClass} mb-0!`} aria-label="Caminho">
+        <a href="#consulta-geral">Consulta geral</a>
+        {run && <><span>/</span>{mazeLabel(run)}</>}
+        <span>/</span><b>#{runId}</b>
+      </nav>
+      <QueryRefreshButton refreshing={refreshing} onRefresh={() => void refresh()} />
+    </div>
 
     {error && <Message error>{error}</Message>}
     {!error && run === undefined && <Message>Carregando execução…</Message>}
     {run === null && <Message>Execução #{runId} não encontrada.</Message>}
 
     {run && <>
-      <section className="mb-3.5 grid grid-cols-[minmax(150px,auto)_repeat(4,minmax(0,1fr))] rounded-(--radius-card) border border-(--line) bg-[linear-gradient(145deg,#111b28_0%,#0f1925_100%)] [@media(max-width:960px)]:grid-cols-2">
+      <section className={`mb-3.5 grid grid-cols-[minmax(150px,auto)_repeat(4,minmax(0,1fr))] max-[960px]:grid-cols-2 ${panelClass}`}>
         <RunCell label="Execução">
-          <strong className="font-(family-name:--mono) text-[20px] leading-[1.15] font-semibold [overflow-wrap:anywhere] text-(--cyan)">#{run.id}</strong>
+          <strong className="break-all font-mono text-xl leading-[1.15] font-semibold text-cyan">#{run.id}</strong>
         </RunCell>
         <RunCell label="Labirinto"><Value>{mazeLabel(run)}</Value></RunCell>
         <RunCell label="Data"><Value>{formatDateTime(run.startedAt)}</Value></RunCell>
-        <RunCell label="Tempo"><Value className="mono">{formatDuration(run.duration)}</Value></RunCell>
+        <RunCell label="Tempo"><Value className={monoClass}>{formatDuration(run.duration)}</Value></RunCell>
         <RunCell label="Status">
           <StatusTag status={run.status} />
-          <small className="text-(length:--text-caption) text-(--text-secondary)">Desafio concluído: {challengeLabel(run)}</small>
+          <small className="text-caption text-secondary">Desafio concluído: {challengeLabel(run)}</small>
         </RunCell>
       </section>
 
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 [@media(max-width:960px)]:grid-cols-1">
+      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-4 max-[960px]:grid-cols-1">
         <section className="min-w-0" aria-label="Trajeto percorrido">
-          <p className="eyebrow mb-2!">TRAJETO PERCORRIDO</p>
+          <p className={`${eyebrowClass} mb-2`}>TRAJETO PERCORRIDO</p>
           {maze
             ? <div
-              className="max-w-full [&_.maze-canvas]:min-h-0! [&_.maze-canvas]:bg-(--surface)! [&_.maze-canvas]:p-2.5! [&_.maze-grid]:w-full! [&_.robot-position]:w-[18px]!"
+              className="max-w-full"
               style={{ width: `${maze.columns * 36 + 40}px` }}
             >
-              <MazeBoard rows={maze.rows} columns={maze.columns} route={route} />
+              <MazeBoard rows={maze.rows} columns={maze.columns} route={route} compact />
             </div>
             : <Message>Execução sem labirinto associado; não é possível desenhar o trajeto.</Message>}
         </section>
 
         <div className="grid min-w-0 gap-2.5">
-          <div className="grid grid-cols-2 gap-2.5 [&_.metric-card]:px-3.5! [&_.metric-card]:py-2.5! [&_.metric-number]:mt-1!">
-            <Stat label="Tempo total" value={formatDuration(run.duration)} />
-            <Stat label="Velocidade média" value={formatNumber(run.averageSpeedMetersPerSecond ?? undefined)} unit="m/s" />
-            <Stat label="Consumo de bateria" value={formatNumber(run.chargeConsumedMilliampHours ?? undefined)} unit="mAh" />
-            <Stat label="Distância total" value={formatNumber(run.distanceTravelledMeters ?? undefined)} unit="m" />
+          <div className="grid grid-cols-2 gap-2.5">
+            <Stat compact label="Tempo total" value={formatDuration(run.duration)} />
+            <Stat compact label="Velocidade média" value={formatNumber(run.averageSpeedMetersPerSecond ?? undefined)} unit="m/s" />
+            <Stat compact label="Consumo de bateria" value={formatNumber(run.chargeConsumedMilliampHours ?? undefined)} unit="mAh" />
+            <Stat compact label="Distância total" value={formatNumber(run.distanceTravelledMeters ?? undefined)} unit="m" />
           </div>
 
-          <section className="panel px-3.5 py-2.5">
-            <p className="eyebrow mb-1!">HISTÓRICO DO LOG</p>
+          <section className={`${panelClass} px-3.5 py-2.5`}>
+            <p className={`${eyebrowClass} mb-1`}>HISTÓRICO DO LOG</p>
             {samples.length === 0
-              ? <p className="m-0 text-(length:--text-small) text-(--text-muted)">Nenhuma amostra de telemetria armazenada para esta execução.</p>
-              : <ol className="m-0 max-h-24 list-none overflow-y-auto p-0 font-(family-name:--mono) text-(length:--text-caption) leading-[1.6] text-(--text-secondary)">
+              ? <p className="m-0 text-small text-muted">Nenhuma amostra de telemetria armazenada para esta execução.</p>
+              : <ol className="m-0 max-h-24 list-none overflow-y-auto p-0 font-mono text-caption leading-[1.6] text-secondary">
                 {samples.map((sample) => <li key={sample.sequence}>
                   [{elapsedLabel(sample.recordedAt, firstSampleAt)}] Bateria {formatNumber(sample.batteryVoltageVolts ?? undefined)} V
                   {' '}— Vel. {formatNumber(sample.currentSpeedMetersPerSecond ?? undefined)} m/s
@@ -280,33 +306,33 @@ function RunDetail({ runId }: { runId: number }) {
 }
 
 function RunCell({ label, children }: { label: string; children: ReactNode }) {
-  return <div className="grid min-w-0 content-center gap-[5px] border-l border-(--line) px-[18px] py-2.5 first:border-l-0 [@media(max-width:960px)]:border-t [@media(max-width:960px)]:border-l-0 [@media(max-width:960px)]:first:col-span-full [@media(max-width:960px)]:first:border-t-0">
-    <span className="metric-label">{label}</span>
+  return <div className="grid min-w-0 content-center gap-[5px] border-l border-line px-[18px] py-2.5 first:border-l-0 max-[960px]:border-t max-[960px]:border-l-0 max-[960px]:first:col-span-full max-[960px]:first:border-t-0">
+    <span className="text-caption text-secondary">{label}</span>
     {children}
   </div>
 }
 
 function Value({ className = '', children }: { className?: string; children: ReactNode }) {
-  return <strong className={`text-(length:--text-body) font-semibold text-(--text) ${className}`}>{children}</strong>
+  return <strong className={`text-body font-semibold text-text ${className}`}>{children}</strong>
 }
 
 export function Message({ error = false, children }: { error?: boolean; children: ReactNode }) {
-  const colors = error ? 'border-[#66363b] bg-[#301e25] text-[#efa5a7]' : 'border-(--line) bg-(--surface) text-(--text-secondary)'
-  return <p className={`rounded-(--radius-card) border p-4 text-(length:--text-body) ${colors}`}>{children}</p>
+  const colors = error ? 'border-[#65443d] bg-[#302321] text-danger' : 'border-line bg-surface text-secondary'
+  return <p className={`rounded-[4px] border p-4 text-body ${colors}`}>{children}</p>
 }
 
-export function Stat({ label, value, unit }: { label: string; value: string; unit?: string }) {
+export function Stat({ label, value, unit, compact = false }: { label: string; value: string; unit?: string; compact?: boolean }) {
   const isPlaceholder = value === '—'
-  return <article className="metric-card">
-    <span className="metric-label">{label}</span>
-    <div className={`metric-number ${isPlaceholder ? 'is-placeholder' : ''}`}>
-      {value}{unit && !isPlaceholder && <small>{unit}</small>}
+  return <article className={`rounded-[4px] border border-line bg-surface ${compact ? 'p-2.5' : 'p-[13px]'}`}>
+    <span className="text-caption text-secondary">{label}</span>
+    <div className={`mt-2 font-mono text-[25px] leading-[1.1] font-medium tracking-[-.04em] tabular-nums text-text max-[700px]:text-[21px] ${compact ? 'mt-1 text-[21px]' : ''} ${isPlaceholder ? 'text-body font-normal tracking-normal text-muted' : ''}`}>
+      {value}{unit && !isPlaceholder && <small className="ml-[7px] font-mono text-caption tracking-normal text-secondary">{unit}</small>}
     </div>
   </article>
 }
 
 export function StatusTag({ status }: { status: RunStatus }) {
-  return <span className={`inline-block rounded-[3px] px-2 py-1 font-(family-name:--mono) text-(length:--text-caption) leading-[normal] whitespace-nowrap ${statusClasses[status]}`}>
+  return <span className={`inline-block whitespace-nowrap rounded-[3px] px-2 py-1 font-mono text-caption leading-[normal] ${statusClasses[status]}`}>
     {statusLabels[status]}
   </span>
 }

@@ -22,7 +22,7 @@ class MqttConfigTest {
         ReflectionTestUtils.setField(config, "topicPrefix", "ratocego");
         ReflectionTestUtils.setField(config, "brokerUri", "tcp://localhost:1883");
         ReflectionTestUtils.setField(config, "qos", 1);
-        MqttPahoClientFactory factory = config.mqttClientFactory("user", "secret", 7, 10, true);
+        MqttPahoClientFactory factory = config.mqttClientFactory("tcp://localhost:1883", "user", "secret", 7, 10, true);
         var telemetryChannel = config.mqttTelemetryInputChannel();
         var startedChannel = config.mqttRunStartedInputChannel();
         var finishedChannel = config.mqttRunFinishedInputChannel();
@@ -30,6 +30,7 @@ class MqttConfigTest {
         var outboundChannel = config.mqttOutboundChannel();
 
         assertNotNull(factory.getConnectionOptions());
+        assertArrayEquals(new String[]{"tcp://localhost:1883"}, factory.getConnectionOptions().getServerURIs());
         assertEquals(10, factory.getConnectionOptions().getKeepAliveInterval());
         assertTrue(factory.getConnectionOptions().isAutomaticReconnect());
         assertInstanceOf(DirectChannel.class, telemetryChannel);

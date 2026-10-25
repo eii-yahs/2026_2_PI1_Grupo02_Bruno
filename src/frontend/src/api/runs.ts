@@ -1,6 +1,31 @@
 import type { Run, TelemetrySample } from '../models/run'
 import type { MazeSize } from '../types/maze'
 
+async function postRunAction(path: string, body?: unknown): Promise<Run> {
+  const response = await fetch(path, {
+    method: 'POST',
+    headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+    body: body === undefined ? undefined : JSON.stringify(body),
+  })
+  if (!response.ok) throw new Error(`Erro ${response.status} ao solicitar ação da execução`)
+  return response.json()
+}
+
+export function startRun(mazeType: MazeSize): Promise<Run> {
+  return postRunAction('/api/runs', { mazeType })
+}
+
+export function interruptRun(runId: number): Promise<Run> {
+  return postRunAction(`/api/runs/${runId}/interrupt`)
+}
+
+export async function fetchActiveRun(): Promise<Run | null> {
+  const response = await fetch('/api/runs/active')
+  if (response.status === 404) return null
+  if (!response.ok) throw new Error(`Erro ${response.status} ao consultar a execução ativa`)
+  return response.json()
+}
+
 // Sem mazeType: todas as execuções (consulta geral). Com mazeType: só as daquele labirinto (consulta por labirinto)
 export async function fetchRuns(mazeType?: MazeSize): Promise<Run[]> {
   const response = await fetch(mazeType ? `/api/runs?mazeType=${mazeType}` : '/api/runs')

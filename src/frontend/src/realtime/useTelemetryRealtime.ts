@@ -6,6 +6,7 @@ const DESTINATIONS = [
   ['/topic/telemetry', 'telemetry'],
   ['/topic/run-finished', 'finished'],
   ['/topic/run-interrupted', 'interrupted'],
+  ['/topic/run-status', 'status'],
 ] as const
 
 // RNF31: heartbeat de aplicação a cada 2 s; conexão indisponível após 6 s sem heartbeat válido.
@@ -14,7 +15,7 @@ const CLIENT_HEARTBEAT_DESTINATION = '/app/heartbeat'
 const HEARTBEAT_INTERVAL_MS = 2_000
 const HEARTBEAT_TIMEOUT_MS = 6_000
 
-export type RealtimeMessage = { kind: 'started' | 'telemetry' | 'finished' | 'interrupted'; payload: Record<string, unknown>; receivedAt: number }
+export type RealtimeMessage = { kind: 'started' | 'telemetry' | 'finished' | 'interrupted' | 'status'; payload: Record<string, unknown>; receivedAt: number }
 
 function isValidTelemetry(payload: Record<string, unknown>) {
   const position = payload.position

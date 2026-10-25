@@ -16,6 +16,7 @@ export type Run = {
   averageSpeedMetersPerSecond: number | null
   chargeConsumedMilliampHours: number | null
   energyConsumedWattHours: number | null
+  interruptRequestedAt: string | null
 }
 
 // Espelha o TelemetrySampleResponse do backend (GET /api/runs/{id}/telemetry)

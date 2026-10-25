@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { ArrowRight } from 'lucide-react'
 import { fetchRuns } from '../api/runs'
 import { AppHeader } from '../components/AppHeader'
 import { LineChart, type ChartPoint } from '../components/LineChart'
+import { QueryRefreshButton } from '../components/QueryRefreshButton'
 import {
   durationSeconds, formatDateTime, formatDuration, matchesSearch, statusLabels, summarizeRuns, withUnit,
   type Run, type RunStatus,
@@ -10,22 +12,22 @@ import { mazeOptions, type MazeSize } from '../types/maze'
 import { formatElapsedTime, formatNumber } from '../utils/format'
 import { Message, Stat, StatusTag } from './GeneralQueryPage'
 import {
-  breadcrumbClass, chartsClass, countClass, fieldClass, filtersClass, tableClass, tableWrapClass, viewLinkClass,
+  breadcrumbClass, chartsClass, countClass, eyebrowClass, fieldClass, filtersClass, monoClass, pageContentClass,
+  pageShellClass, panelClass, tableClass, tableWrapClass, viewLinkClass,
 } from './queryClasses'
-import '../App.css'
 
 type Props = { hash: string }
 
 const mazeSizes = Object.keys(mazeOptions) as MazeSize[]
-const tabClass = 'inline-flex min-h-9 items-center rounded-(--radius-control) border px-3 font-(family-name:--mono) text-(length:--text-small) leading-[normal] no-underline'
+const tabClass = 'inline-flex min-h-9 items-center rounded-[3px] border px-3 font-mono text-small leading-[normal] no-underline'
 
 export function MazeQueryPage({ hash }: Props) {
   const requested = hash.split('/')[1] ?? mazeSizes[0]
   const mazeType = mazeSizes.find((size) => size === requested)
 
-  return <main className="app-shell">
+  return <main className={pageShellClass}>
     <AppHeader active="consulta-geral" />
-    <div className="page-content">
+    <div className={pageContentClass}>
       <nav className={breadcrumbClass} aria-label="Caminho">
         <a href="#consulta-geral">Consulta geral</a>
         <span>/</span><b>Labirinto {mazeType ? mazeOptions[mazeType].label : requested}</b>
@@ -44,14 +46,26 @@ function MazeRuns({ mazeType }: { mazeType: MazeSize }) {
   const maze = mazeOptions[mazeType]
   const [runs, setRuns] = useState<Run[] | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [refreshing, setRefreshing] = useState(true)
   const [status, setStatus] = useState<RunStatus | ''>('')
   const [search, setSearch] = useState('')
 
-  useEffect(() => {
-    fetchRuns(mazeType)
-      .then((data) => setRuns([...data].reverse()))
-      .catch((e: Error) => setError(e.message))
+  const refresh = useCallback(async () => {
+    setRefreshing(true)
+    setError(null)
+    try {
+      const data = await fetchRuns(mazeType)
+      setRuns([...data].reverse())
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Não foi possível atualizar as execuções.')
+    } finally {
+      setRefreshing(false)
+    }
   }, [mazeType])
+
+  useEffect(() => {
+    void refresh()
+  }, [refresh])
 
   const filtered = useMemo(() => (runs ?? []).filter((run) =>
     (!status || run.status === status) && matchesSearch(run, search),
@@ -65,12 +79,12 @@ function MazeRuns({ mazeType }: { mazeType: MazeSize }) {
 
   return <>
     <section className="mb-3.5 grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 [@media(max-width:700px)]:grid-cols-1">
-      <div className="panel p-3.5" aria-label={`Layout do labirinto ${maze.label}`}>
-        <p className="eyebrow mb-3!">LAYOUT — {maze.label}</p>
+      <div className={`${panelClass} p-3.5`} aria-label={`Layout do labirinto ${maze.label}`}>
+        <p className={`${eyebrowClass} mb-3`}>LAYOUT — {maze.label}</p>
         <div className="grid justify-center gap-[3px]" style={{ gridTemplateColumns: `repeat(${maze.columns}, 12px)` }}>
           {Array.from({ length: maze.rows * maze.columns }, (_, index) => <span
             key={index}
-            className="h-3 w-3 rounded-[2px] border border-[#32485d] bg-[#172434]"
+            className="size-3 rounded-[2px] border border-[#50564d] bg-[#262b26]"
           />)}
         </div>
       </div>
@@ -85,6 +99,9 @@ function MazeRuns({ mazeType }: { mazeType: MazeSize }) {
       </div>
     </section>
 
+    <div className="mb-3.5 flex justify-end">
+      <QueryRefreshButton refreshing={refreshing} onRefresh={() => void refresh()} />
+    </div>
     <MazeTabs active={mazeType} />
 
     {error && <Message error>{error}</Message>}
@@ -98,7 +115,7 @@ function MazeRuns({ mazeType }: { mazeType: MazeSize }) {
           {Object.entries(statusLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
         <input
-          className={`${fieldClass} min-w-0 flex-[1_1_220px] placeholder:text-(--text-muted)`}
+          className={`${fieldClass} min-w-0 flex-[1_1_220px] placeholder:text-muted`}
           type="search"
           aria-label="Buscar por ID ou data"
           placeholder="Buscar por ID ou data…"
@@ -129,11 +146,11 @@ function MazeRuns({ mazeType }: { mazeType: MazeSize }) {
                 <td><a href={`#consulta-geral/${run.id}`}>#{run.id}</a></td>
                 <td>{formatDateTime(run.startedAt)}</td>
                 <td><StatusTag status={run.status} /></td>
-                <td className="mono">{formatDuration(run.duration)}</td>
-                <td className="mono">{withUnit(run.chargeConsumedMilliampHours, 'mAh')}</td>
-                <td className="mono">{withUnit(run.averageSpeedMetersPerSecond, 'm/s')}</td>
-                <td className="mono">{withUnit(run.distanceTravelledMeters, 'm')}</td>
-                <td><a className={viewLinkClass} href={`#consulta-geral/${run.id}`}>ver →</a></td>
+                <td className={monoClass}>{formatDuration(run.duration)}</td>
+                <td className={monoClass}>{withUnit(run.chargeConsumedMilliampHours, 'mAh')}</td>
+                <td className={monoClass}>{withUnit(run.averageSpeedMetersPerSecond, 'm/s')}</td>
+                <td className={monoClass}>{withUnit(run.distanceTravelledMeters, 'm')}</td>
+                <td><a className={viewLinkClass} href={`#consulta-geral/${run.id}`}>ver <ArrowRight className="size-[13px] shrink-0" aria-hidden="true" /></a></td>
               </tr>)}
             </tbody>
           </table>
@@ -168,8 +185,8 @@ function MazeTabs({ active }: { active?: MazeSize }) {
       key={size}
       href={`#consulta-por-labirinto/${size}`}
       className={`${tabClass} ${size === active
-        ? 'border-(--cyan) bg-[#0f2430] text-(--cyan)'
-        : 'border-[#30445a] bg-[#0c1520] text-(--text-secondary) hover:border-[#48627c] hover:text-(--text)'}`}
+        ? 'border-amber bg-[#302a20] text-amber'
+        : 'border-[#4a4e48] bg-surface-low text-secondary hover:border-[#777b70] hover:text-text'}`}
       aria-current={size === active ? 'page' : undefined}
     >
       {mazeOptions[size].label}

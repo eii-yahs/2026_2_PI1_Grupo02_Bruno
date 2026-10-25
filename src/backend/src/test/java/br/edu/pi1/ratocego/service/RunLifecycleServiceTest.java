@@ -3,6 +3,7 @@ package br.edu.pi1.ratocego.service;
 import br.edu.pi1.ratocego.dto.mqtt.RunFinishedPayload;
 import br.edu.pi1.ratocego.dto.mqtt.RunInterruptedPayload;
 import br.edu.pi1.ratocego.dto.mqtt.RunStartedPayload;
+import br.edu.pi1.ratocego.dto.websocket.RunCommandStatusUpdate;
 import br.edu.pi1.ratocego.model.Run;
 import br.edu.pi1.ratocego.model.RunStatus;
 import br.edu.pi1.ratocego.repository.RunRepository;
@@ -10,14 +11,16 @@ import br.edu.pi1.ratocego.util.MqttPayloadParser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.ApplicationEventPublisher;
+import tools.jackson.databind.ObjectMapper;
+import br.edu.pi1.ratocego.model.MazeType;
 
 import java.time.Instant;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -28,6 +31,7 @@ class RunLifecycleServiceTest {
     private MqttPayloadParser parser;
     private RunRepository runs;
     private ApplicationEventPublisher events;
+    private ObjectMapper objectMapper;
     private RunLifecycleService service;
 
     @BeforeEach
@@ -35,11 +39,92 @@ class RunLifecycleServiceTest {
         parser = mock(MqttPayloadParser.class);
         runs = mock(RunRepository.class);
         events = mock(ApplicationEventPublisher.class);
-        service = new RunLifecycleService(parser, runs, events);
+        objectMapper = mock(ObjectMapper.class);
+        service = new RunLifecycleService(parser, runs, events, objectMapper, "ratocego/");
     }
 
     @Test
-    void startedEventCreatesRunAndAppliesStartTransition() {
+    void startPersistsRequestPublishesCommandAndAnnouncesStatus() throws Exception {
+        when(runs.findByStatusIn(any())).thenReturn(java.util.List.of());
+        when(runs.save(any())).thenAnswer(invocation -> {
+            Run saved = invocation.getArgument(0);
+            saved.setId(17L);
+            return saved;
+        });
+        when(objectMapper.writeValueAsString(any())).thenReturn("command-json");
+        Run run = service.start(MazeType.GRID_4X4);
+        assertEquals(RunStatus.START_REQUESTED, run.getStatus());
+        verify(runs).save(org.mockito.ArgumentMatchers.argThat(saved -> saved.getStartRequestedAt() != null
+                && saved.getStatus() == RunStatus.START_REQUESTED));
+        var command = org.mockito.ArgumentCaptor.forClass(MqttCommandPublicationRequested.class);
+        verify(events).publishEvent(command.capture());
+        assertEquals("ratocego/commands/run/start", command.getValue().topic());
+        assertEquals("command-json", command.getValue().payload());
+        verify(events).publishEvent(any(WebSocketUpdateEvent.class));
+    }
+
+    @Test
+    void startTimeoutMarksRequestFailed() {
+        Run run = activeRun(Instant.now().minusSeconds(6), RunStatus.START_REQUESTED);
+        run.setStartRequestedAt(Instant.now().minusSeconds(6));
+        when(runs.findByStatusIn(any())).thenReturn(java.util.List.of(run));
+        service.processCommandTimeouts();
+        assertEquals(RunStatus.FAILED, run.getStatus());
+        verify(events).publishEvent(any(WebSocketUpdateEvent.class));
+    }
+
+    @Test
+    void interruptPublishesCommandAndMovesRunToPending() throws Exception {
+        Run run = activeRun(Instant.now().minusSeconds(1), RunStatus.IN_PROGRESS);
+        when(runs.findById(42L)).thenReturn(Optional.of(run));
+        when(objectMapper.writeValueAsString(any())).thenReturn("interrupt-json");
+
+        Run updated = service.interrupt(42L);
+
+        assertEquals(RunStatus.INTERRUPT_REQUESTED, updated.getStatus());
+        assertTrue(updated.getInterruptRequestedAt() != null);
+        var command = org.mockito.ArgumentCaptor.forClass(MqttCommandPublicationRequested.class);
+        verify(events).publishEvent(command.capture());
+        assertEquals("ratocego/commands/run/interrupt", command.getValue().topic());
+        assertEquals("interrupt-json", command.getValue().payload());
+        verify(events).publishEvent(any(WebSocketUpdateEvent.class));
+    }
+
+    @Test
+    void interruptTimeoutKeepsRunPendingAndAllowsRetry() {
+        Run run = activeRun(Instant.now().minusSeconds(5), RunStatus.INTERRUPT_REQUESTED);
+        run.setInterruptRequestedAt(Instant.now().minusSeconds(3));
+        when(runs.findByStatusIn(any())).thenReturn(java.util.List.of(run));
+
+        service.processCommandTimeouts();
+
+        assertEquals(RunStatus.INTERRUPT_REQUESTED, run.getStatus());
+        assertTrue(run.isInterruptTimeoutWarned());
+        var event = org.mockito.ArgumentCaptor.forClass(WebSocketUpdateEvent.class);
+        verify(events).publishEvent(event.capture());
+        assertTrue(((RunCommandStatusUpdate) event.getValue().update()).retryAllowed());
+    }
+
+    @Test
+    void lateStartConfirmationMarksRunFailed() {
+        Instant requestedAt = Instant.now().minusSeconds(6);
+        Run run = activeRun(null, RunStatus.START_REQUESTED);
+        run.setStartRequestedAt(requestedAt);
+        run.setMazeRows(4);
+        run.setMazeColumns(4);
+        when(parser.parseAndValidate("json", RunStartedPayload.class))
+                .thenReturn(new RunStartedPayload(1, 42, Instant.now(), 4, 4));
+        when(runs.findById(42L)).thenReturn(Optional.of(run));
+
+        service.processStarted("json");
+
+        assertEquals(RunStatus.FAILED, run.getStatus());
+        verify(runs).save(run);
+        verify(events).publishEvent(any(WebSocketUpdateEvent.class));
+    }
+
+    @Test
+    void unsolicitedStartedEventIsIgnored() {
         Instant startedAt = Instant.parse("2026-10-09T12:00:00Z");
         when(parser.parseAndValidate("json", RunStartedPayload.class))
                 .thenReturn(new RunStartedPayload(1, 42, startedAt, 4, 4));
@@ -47,9 +132,8 @@ class RunLifecycleServiceTest {
 
         service.processStarted("json");
 
-        verify(runs).save(org.mockito.ArgumentMatchers.argThat(run -> run.getId().equals(42L)
-                && run.getStatus() == RunStatus.IN_PROGRESS && run.getStartedAt().equals(startedAt)));
-        verify(events).publishEvent(any(WebSocketUpdateEvent.class));
+        verify(runs, never()).save(any());
+        verify(events, never()).publishEvent(any());
     }
 
     @Test

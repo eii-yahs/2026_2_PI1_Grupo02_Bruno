@@ -20,6 +20,7 @@ public record RunResponse(
         BigDecimal distanceTravelledMeters,
         BigDecimal averageSpeedMetersPerSecond,
         BigDecimal chargeConsumedMilliampHours,
-        BigDecimal energyConsumedWattHours
+        BigDecimal energyConsumedWattHours,
+        Instant interruptRequestedAt
 ) {
 }
