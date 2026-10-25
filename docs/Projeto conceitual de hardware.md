@@ -61,11 +61,11 @@
 
 **Figura 1.** Diagrama de blocos e esquemático elétrico do sistema de controle e navegação do micromouse.
 
-## Mapeamento de Pinos (Pinout) do Microcontrolador
+## Mapeamento de Pinos (Pinout) do microcontrolador
 
 A tabela a seguir descreve a alocação dos pinos do módulo ESP32 (ESP-WROOM-32) utilizados no projeto, detalhando a sua respectiva função e o subsistema ao qual estão conectados, conforme definido no esquemático elétrico do robô.
 
-| Pino na Placa (Serigrafia) | GPIO Interno | Subsistema | Função / Descrição |
+| Pino na placa (serigrafia) | GPIO interno | Subsistema | Função / Descrição |
 | :--- | :--- | :--- | :--- |
 | **VIN** | - | Alimentação | Entrada de alimentação lógica de 5V (proveniente do regulador LM7805). |
 | **GND** | - | Alimentação | Referência de terra (GND) comum do circuito. |
@@ -93,23 +93,23 @@ Abaixo estão listadas as referências técnicas, os _datasheets_ e os materiais
    * Espressif Systems. _ESP-WROOM-32 Datasheet_. 
    * Disponível em: [AllDatasheet - ESP-WROOM-32](https://www.alldatasheet.com/datasheet-pdf/view/1179101/ESPRESSIF/ESP-WROOM-32.html)
 
-2. **Regulador de Tensão Linear (LM7805)**
+2. **Regulador de tensão linear (LM7805)**
    * Texas Instruments. _LM7805 3-Terminal 1A Positive Voltage Regulator_.
    * Disponível em: [AllDatasheet - LM7805](https://www.alldatasheet.com/datasheet-pdf/view/838007/TI1/LM7805.html)
 
-3. **Sensor de Tensão e Corrente (INA219)**
+3. **Sensor de tensão e corrente (INA219)**
    * Texas Instruments. _INA219 Zero-Drift, Bidirectional Current/Power Monitor with I2C Interface_.
    * Disponível em: [AllDatasheet - INA219](https://www.alldatasheet.com/datasheet-pdf/view/249609/TI/INA219.html)
 
-4. **Sensores de Obstáculo Infravermelho (FC-51)**
+4. **Sensores de obstáculo infravermelho (FC-51)**
    * _Datasheet_ do módulo comparador LM393 e sensor reflexivo infravermelho (FC-51).
    * Disponível em: [Scribd - FC-51](https://www.scribd.com/document/432501798/FC-51)
 
-5. **_Driver_ de Motor (Mini Ponte H / MX1508)**
+5. **_Driver_ de motor (mini ponte H / MX1508)**
    * _MX1508 DC Motor Driver Pinout & Features_.
    * Disponível em: [Components101 - MX1508](https://components101.com/modules/mx1508-dc-motor-driver-pinout-features-datasheet)
 
-6. **Motores DC com _Encoder_ (N20)**
+6. **Motores DC com _encoder_ (N20)**
    * Referência prática de pinagem, montagem e uso de motores N20 com _encoders_ de quadratura integrados.
    * DreamWorks. _"n20 encoder motor with arduino"_. 
    * Disponível em: [YouTube - Canal DreamWorks](https://www.youtube.com/watch?v=hU2ykoFz3f0)
