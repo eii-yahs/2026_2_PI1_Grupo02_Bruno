@@ -38,7 +38,7 @@ A aquisição de dados foi dividida de acordo com a natureza de cada sensor, vis
   rawT = analogRead(IR_TRAS);
   ```
 
-- **Encoders (Odometria):** A leitura de posição é realizada de forma assíncrona por meio de interrupções de hardware, configuradas com `attachInterrupt(..., RISING)`. A cada borda de subida detectada no canal A, as funções `isrE()` e `isrD()` incrementam ou decrementam os contadores de *ticks*, conforme o estado do canal B.
+- **Encoders (odometria):** A leitura de posição é realizada de forma assíncrona por meio de interrupções de hardware, configuradas com `attachInterrupt(..., RISING)`. A cada borda de subida detectada no canal A, as funções `isrE()` e `isrD()` incrementam ou decrementam os contadores de *ticks*, conforme o estado do canal B.
 
   Essa abordagem reduz a possibilidade de perda de pulsos durante a execução de outras tarefas, embora não garanta a captura de todos os pulsos em qualquer condição de operação.
 
@@ -47,18 +47,18 @@ A aquisição de dados foi dividida de acordo com a natureza de cada sensor, vis
   attachInterrupt(ENC_D_A, isrD, RISING);
   ```
 
-- **Monitoramento de Energia:** O módulo INA219 fornece os dados de tensão e corrente por meio do barramento I²C, utilizando as funções da biblioteca `Adafruit_INA219`.
+- **Monitoramento de energia:** O módulo INA219 fornece os dados de tensão e corrente por meio do barramento I²C, utilizando as funções da biblioteca `Adafruit_INA219`.
 
   ```cpp
   ina219.getBusVoltage_V();
   ina219.getCurrent_mA();
   ```
 
-### 2.2. Validação e Calibração das Leituras
+### 2.2. Validação e calibração das leituras
 
 A calibração do sistema é definida por constantes no código, cujos valores devem ser ajustados por meio de testes experimentais para relacionar as leituras dos sensores às grandezas físicas.
 
-#### Calibração de Distância
+#### Calibração de distância
 
 Os encoders permitem estimar deslocamentos a partir da quantidade de pulsos registrados.
 
@@ -76,7 +76,7 @@ const long TICKS_AVANCO = 250;
 
 Considerando um labirinto que possui células de **18 × 18 cm**, é necessário calibrar essas constantes conforme o diâmetro das rodas, a resolução dos encoders e as dimensões físicas do robô.
 
-#### Calibração de Paredes
+#### Calibração de paredes
 
 A detecção de obstáculos utiliza um limiar aplicado às leituras analógicas dos sensores infravermelhos.
 
@@ -90,11 +90,11 @@ Quando a leitura ultrapassa o limiar definido, o sistema considera que existe um
 
 O valor de `1500` é um parâmetro inicial, que deve ser validado experimentalmente conforme a distância de detecção desejada, as características dos sensores e as condições de iluminação.
 
-### 2.3. Definição das Taxas de Amostragem e Volume de Dados
+### 2.3. Definição das taxas de amostragem e volume de dados
 
 O sistema utiliza duas frequências de operação distintas: uma destinada à leitura e ao controle local e outra à atualização da interface de telemetria.
 
-#### Amostragem de Controle (Alta Frequência)
+#### Amostragem de controle (alta frequência)
 
 O ciclo principal do programa utiliza:
 
@@ -112,7 +112,7 @@ O controle de alinhamento das rodas utiliza uma estratégia **proporcional (P)**
 const float KP = 2.0;
 ```
 
-#### Transmissão de Telemetria (Baixa Frequência)
+#### Transmissão de telemetria (baixa frequência)
 
 A atualização da interface web é realizada por requisições HTTP assíncronas (*polling*).
 
@@ -126,7 +126,7 @@ setInterval(async () => {
 
 Essa estratégia permite acompanhar o estado dos sensores e do robô sem exigir uma transmissão contínua de dados.
 
-#### Quantidade de Dados
+#### Quantidade de dados
 
 As informações são organizadas em uma estrutura JSON compacta, construída pela função `enviarDados()`.
 
@@ -149,7 +149,7 @@ Os dados transmitidos incluem:
 
 Dessa forma, são transmitidos **11 campos numéricos ou booleanos e uma string de estado**, totalizando 12 campos.
 
-### 2.4. Validação das Taxas Definidas
+### 2.4. Validação das taxas definidas
 
 A utilização de interrupções para aquisição dos pulsos dos encoders permite que a contagem ocorra independentemente das leituras periódicas realizadas no programa principal.
 
@@ -169,11 +169,11 @@ Entretanto, sua adequação deve ser confirmada experimentalmente, medindo a lat
 
 É importante destacar que as rotinas de movimentação utilizam estruturas bloqueantes (`while`), de modo que a frequência de leitura dos sensores e a resposta do sistema podem variar durante as manobras.
 
-### 2.5. Processamento Básico de Dados (Tratamento de Sinais)
+### 2.5. Processamento básico de dados (tratamento de sinais)
 
 O código aplica operações de processamento digital aos sinais adquiridos, transformando as leituras em informações utilizadas pela lógica de navegação.
 
-#### Limiarização (*Thresholding*)
+#### Limiarização (*thresholding*)
 
 A limiarização é o principal método de processamento aplicado aos sensores infravermelhos.
 
@@ -195,7 +195,7 @@ Esse processamento facilita a implementação do algoritmo de seguimento de pare
 
 Entretanto, a limiarização simples não elimina ruídos ou oscilações próximas ao valor de referência.
 
-#### Tratamento dos Encoders com `labs()`
+#### Tratamento dos encoders com `labs()`
 
 A função `labs()` calcula o valor absoluto de uma diferença entre contagens dos encoders.
 
@@ -236,7 +236,7 @@ Dessa maneira, busca-se reduzir a diferença de deslocamento entre as rodas dura
 
 É importante observar que `labs()` não constitui um filtro digital e que o erro calculado pode assumir valores positivos ou negativos. A operação apenas elimina o sinal individual dos deslocamentos.
 
-#### Média Móvel (Implementação Futura)
+#### Média móvel (implementação futura)
 
 Caso sejam observadas oscilações significativas nas leituras dos sensores infravermelhos, poderá ser implementado um filtro de média móvel.
 
@@ -258,7 +258,7 @@ A implementação desse filtro poderá reduzir a influência de variações ráp
 
 Como contrapartida, introduzirá um pequeno atraso na identificação de mudanças, que deverá ser considerado na calibração das curvas e na detecção das aberturas do labirinto.
 
-## 🎥 Demonstração do Protótipo
+## 🎥 Demonstração do protótipo
 
 O vídeo a seguir apresenta o estágio atual de desenvolvimento do **Micromouse**, demonstrando o funcionamento geral do protótipo e a integração dos sistemas implementados até o momento.
 
