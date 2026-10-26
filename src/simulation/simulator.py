@@ -14,6 +14,7 @@ from pathlib import Path
 from urllib.parse import urlparse
 
 import paho.mqtt.client as mqtt
+from navigation import GoalDetector, goal_cell
 
 
 MAZES = {
@@ -168,9 +169,19 @@ class MicromouseSimulator:
             run["stop"].set()
         print(f"[run {run_id}] interrupção solicitada", flush=True)
 
+    def identify_goal(self, run: dict, position: tuple[int, int]) -> bool:
+        """Signal first arrival locally; HU32 will consume this identification."""
+        detector = run["goalDetector"]
+        if not detector.update(position):
+            return False
+        print(f"[run {run['runId']}] objetivo identificado: labirinto={run['mazeType']} "
+              f"posicao={position} alvo={goal_cell(detector.rows, detector.columns)}", flush=True)
+        return True
+
     def run_maze(self, run: dict) -> None:
         run_id = run["runId"]
         rows, columns = MAZES[run["mazeType"]]
+        run["goalDetector"] = GoalDetector(rows, columns)
         path = serpentine_path(rows, columns)
         started = time.monotonic()
         started_confirmed = self.publish(self.topic(f"runs/{run_id}/started"), {
@@ -198,6 +209,7 @@ class MicromouseSimulator:
             elapsed = time.monotonic() - started
             distance = min(total_distance, elapsed * self.args.speed)
             position, heading = self.position_at(path, distance, cell_length, total_distance)
+            self.identify_goal(run, position)
             sequence += 1
             battery_voltage = max(7.0, 8.2 - distance * 0.035)
             current = 260.0 + 30.0 * math.sin(elapsed * 1.7)
