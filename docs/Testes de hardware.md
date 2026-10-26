@@ -353,33 +353,67 @@ Essa abordagem é adequada à estratégia de navegação adotada, baseada no seg
 Como possibilidade de desenvolvimento futuro, poderá ser implementado o armazenamento de históricos de leituras e eventos de navegação na memória não volátil da ESP32, permitindo análises posteriores do comportamento do robô.
 
 
+# **4. Atuadores**
+
+Os atuadores são dois motores DC N20 com caixa de redução e *encoder* de quadratura, acionados pela ponte H dupla L298N. O ESP32 define o sentido de giro pelas entradas IN1 a IN4 e a velocidade pelo PWM nos pinos de habilitação ENA e ENB.
+
+| Motor | Sentido | Velocidade (PWM) | *Encoder* (A / B) |
+| :---- | :---- | :---- | :---- |
+| Esquerdo | IN1 (GPIO16) / IN2 (GPIO17) | ENA (GPIO4) | GPIO32 / GPIO33 |
+| Direito | IN3 (GPIO18) / IN4 (GPIO19) | ENB (GPIO2) | GPIO25 / GPIO26 |
+
+*Tabela 11 – Pinos de acionamento dos motores.*
+
+Fonte: Elaborado pelos autores (2026).
+
+## **4.1. Acionamentos básicos (ID 3.12)**
+
+**Requisitos associados:** [RF11](http://requisitos.md#rf11) e [RF33](http://requisitos.md#rf33).
+
+Cada motor foi acionado nos três estados da L298N:
+
+| IN1 / IN2 (IN3 / IN4) | ENA (ENB) | Resultado |
+| :---: | :---: | :---- |
+| Alto / baixo | PWM | Motor gira para frente |
+| Baixo / alto | PWM | Motor gira para trás |
+| Qualquer | 0 | Motor desenergizado (parada) |
+
+*Tabela 12 – Estados de acionamento dos motores.*
+
+Fonte: Elaborado pelos autores (2026).
+
+**Resultado.** Os dois motores giraram nos dois sentidos e pararam com o PWM em zero, confirmando o acionamento reversível ([RF11](http://requisitos.md#rf11)). A parada também foi verificada pelo comando "Parar" (/p) da página de supervisão ([RF33](http://requisitos.md#rf33)).
+
+## **4.2. Processamento básico: PWM (ID 3.13)**
+
+**Requisito associado:** [RF11](http://requisitos.md#rf11).
+
+O PWM é gerado pelo periférico LEDC do ESP32 (ledcAttach e ledcWrite) nos pinos ENA (GPIO4) e ENB (GPIO2), a **20 kHz** e com **8 bits** de resolução (0 a 255). A frequência de 20 kHz fica no limite da audição humana, o que evita o chiado dos motores em frequências mais baixas.
+
+| *Duty cycle* | Valor em ledcWrite |
+| :---: | :---: |
+| 25% | 64 |
+| 50% | 128 |
+| 75% | 191 |
+| 100% | 255 |
+
+*Tabela 13 – Relação entre duty cycle e valor do PWM.*
+
+Fonte: Elaborado pelos autores (2026).
+
+**Resultado.** O PWM nos pinos ENA e ENB controlou a velocidade dos dois motores, nos dois sentidos de giro.
+
+## **4.3. Acionamento com base nos dados dos sensores (ID 3.14)**
+
+**Requisitos associados:** [RF12](http://requisitos.md#rf12), [RF13](http://requisitos.md#rf13), [RF34](http://requisitos.md#rf34) e [RF53](http://requisitos.md#rf53).
+
+Os motores são acionados a partir de dois sensores:
+
+* ***Encoders*****:** os pulsos de cada roda (ticksE e ticksD) são usados para corrigir desvios em linha reta e para encerrar cada movimento ao atingir a meta de pulsos: TICKS\_AVANCO \= 250 no avanço e TICKS\_90 \= 330 no giro de 90°.
+
+* **Sensores IR:** as leituras das GPIOs 36, 39 e 34 são comparadas com o limiar LIMITE\_PAREDE \= 1500 para indicar parede à esquerda, à frente e à direita. A partir dessa informação, o robô decide se avança, gira 90° para a direita ou para a esquerda.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-> 4. Atuadores (Motores DC, relés, LEDs etc.):
->    - Realizar acionamentos básicos;
->    - Realizar acionamentos com base em dados de sensores;
->    - Realizar processamento básico de dados (PWM etc.).
-> 5. Comunicações (UART, I2C, SPI, USB, WiFi, Bluetooth etc.):
->    - Transmissão básica de dados;
->    - Transmissão de dados de sensores dentro da taxa de amostragem.
 
 | **ID** | **Descrição** | **Data de Início** | **Data de Conclusão** | **Responsável** | **Resultados Esperados** | **Resultados Obtidos** | **Aprovação Interna (S/N)** | **Aprovação do Orientador (S/N)** | **Observações** |
 |:------:|---------------|--------------------|-----------------------|-----------------|--------------------------|------------------------|:---------------------------:|:--------------------------------:|-----------------|
