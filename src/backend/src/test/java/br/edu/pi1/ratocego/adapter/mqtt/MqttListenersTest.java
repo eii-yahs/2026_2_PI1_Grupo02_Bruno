@@ -11,7 +11,9 @@ class MqttListenersTest {
 
     @Test
     void forwardsRunLifecyclePayloadsToLifecycleService() {
-        RunLifecycleService service = mock(RunLifecycleService.class);
+        RunLifecycleService service =
+                mock(RunLifecycleService.class);
+
         MqttRunListener listener = new MqttRunListener(service);
 
         listener.onRunStarted("started");
@@ -25,9 +27,11 @@ class MqttListenersTest {
 
     @Test
     void forwardsTelemetryPayloadToTelemetryService() {
-        TelemetryService service = mock(TelemetryService.class);
+        TelemetryService service =
+                mock(TelemetryService.class);
 
-        new MqttTelemetryListener(service).onTelemetrySample("sample");
+        new MqttTelemetryListener(service)
+                .onTelemetrySample("sample");
 
         verify(service).processSample("sample");
     }

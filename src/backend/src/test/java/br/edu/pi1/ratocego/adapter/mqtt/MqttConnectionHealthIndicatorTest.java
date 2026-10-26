@@ -2,9 +2,6 @@ package br.edu.pi1.ratocego.adapter.mqtt;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.health.contributor.Status;
-import org.springframework.integration.mqtt.core.MqttPahoComponent;
-import org.springframework.integration.mqtt.event.MqttConnectionFailedEvent;
-import org.springframework.integration.mqtt.event.MqttSubscribedEvent;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
@@ -13,61 +10,34 @@ import static org.mockito.Mockito.when;
 class MqttConnectionHealthIndicatorTest {
 
     @Test
-    void reportsUnknownUntilAllInboundAdaptersSubscribe() {
-        var indicator = new MqttConnectionHealthIndicator();
-        assertEquals(Status.UNKNOWN, indicator.health().getStatus());
+    void reportsUpWhenConnectionAndSubscriptionsAreReady() {
+        ManagedMqttConnection connection =
+                mock(ManagedMqttConnection.class);
 
-        subscribed(indicator, "mqttTelemetryInbound");
-        subscribed(indicator, "mqttRunStartedInbound");
-        subscribed(indicator, "mqttRunFinishedInbound");
-        subscribed(indicator, "mqttRunInterruptedInbound");
+        when(connection.isConnected()).thenReturn(true);
 
-        assertEquals(Status.UP, indicator.health().getStatus());
+        MqttConnectionHealthIndicator indicator =
+                new MqttConnectionHealthIndicator(connection);
+
+        assertEquals(
+                Status.UP,
+                indicator.health().getStatus()
+        );
     }
 
     @Test
-    void reportsDownWhenAnInboundConnectionFails() {
-        var indicator = new MqttConnectionHealthIndicator();
-        MqttPahoComponent source = source("mqttTelemetryInbound");
+    void reportsDownWhenDisconnected() {
+        ManagedMqttConnection connection =
+                mock(ManagedMqttConnection.class);
 
-        indicator.onConnectionFailed(new MqttConnectionFailedEvent(source));
+        when(connection.isConnected()).thenReturn(false);
 
-        assertEquals(Status.DOWN, indicator.health().getStatus());
-    }
+        MqttConnectionHealthIndicator indicator =
+                new MqttConnectionHealthIndicator(connection);
 
-    @Test
-    void reportsUpAgainAfterFailedInboundAdapterResubscribes() {
-        var indicator = new MqttConnectionHealthIndicator();
-        subscribed(indicator, "mqttTelemetryInbound");
-        subscribed(indicator, "mqttRunStartedInbound");
-        subscribed(indicator, "mqttRunFinishedInbound");
-        subscribed(indicator, "mqttRunInterruptedInbound");
-
-        indicator.onConnectionFailed(new MqttConnectionFailedEvent(source("mqttTelemetryInbound")));
-        assertEquals(Status.DOWN, indicator.health().getStatus());
-
-        subscribed(indicator, "mqttTelemetryInbound");
-        assertEquals(Status.UP, indicator.health().getStatus());
-    }
-
-    @Test
-    void ignoresEventsFromUntrackedComponents() {
-        var indicator = new MqttConnectionHealthIndicator();
-        MqttPahoComponent source = source("mqttOutbound");
-
-        indicator.onSubscribed(new MqttSubscribedEvent(source, "subscribed"));
-        indicator.onConnectionFailed(new MqttConnectionFailedEvent(source));
-
-        assertEquals(Status.UNKNOWN, indicator.health().getStatus());
-    }
-
-    private void subscribed(MqttConnectionHealthIndicator indicator, String beanName) {
-        indicator.onSubscribed(new MqttSubscribedEvent(source(beanName), "subscribed"));
-    }
-
-    private MqttPahoComponent source(String beanName) {
-        MqttPahoComponent source = mock(MqttPahoComponent.class);
-        when(source.getBeanName()).thenReturn(beanName);
-        return source;
+        assertEquals(
+                Status.DOWN,
+                indicator.health().getStatus()
+        );
     }
 }
