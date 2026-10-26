@@ -388,7 +388,7 @@ Fonte: Elaborado pelos autores (2026).
 
 **Requisito associado:** [RF11](http://requisitos.md#rf11).
 
-O PWM é gerado pelo periférico LEDC do ESP32 (ledcAttach e ledcWrite) nos pinos ENA (GPIO4) e ENB (GPIO2), a **20 kHz** e com **8 bits** de resolução (0 a 255). A frequência de 20 kHz fica no limite da audição humana, o que evita o chiado dos motores em frequências mais baixas.
+O PWM é gerado pelo periférico LEDC do ESP32 (ledcAttach e ledcWrite) nos pinos ENA (GPIO4) e ENB (GPIO2), a **20 kHz** e com **8 bits** de resolução (0 a 255). 
 
 | *Duty cycle* | Valor em ledcWrite |
 | :---: | :---: |
