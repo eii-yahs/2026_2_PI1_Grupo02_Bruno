@@ -1,0 +1,45 @@
+@startuml
+!pragma layout smetana
+title Diagrama de implantação — Rato Cego
+left to right direction
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam linetype ortho
+skinparam nodeBackgroundColor white
+skinparam artifactBackgroundColor white
+
+node "Computador local" as host <<device>> {
+  node "Navegador" as browser <<executionEnvironment>> {
+    artifact "Aplicação React\nJavaScript / HTML / CSS" as client
+  }
+  node "Servidor Vite" as vite <<executionEnvironment>> {
+    artifact "Frontend\nArquivos da aplicação" as frontend
+  }
+  node "Docker Engine / Compose" as docker <<executionEnvironment>> {
+    node "Contêiner backend\nJVM / Spring Boot" as backend <<executionEnvironment>> {
+      artifact "Aplicação backend\nAPI REST / STOMP" as application
+    }
+    node "Contêiner mosquitto" as broker <<executionEnvironment>> {
+      artifact "Eclipse Mosquitto\nmosquitto.conf" as mqtt
+    }
+    node "Contêiner database" as database <<executionEnvironment>> {
+      artifact "PostgreSQL\nBanco ratocego" as postgres
+    }
+    artifact "Volume postgres_data" as postgresdata <<volume>>
+    artifact "Volume mosquitto_data\nDados e arquivo de autenticação" as mqttdata <<volume>>
+  }
+}
+
+node "Robô Rato Cego" as robot <<device>> {
+  artifact "Firmware\nCliente MQTT" as firmware
+}
+
+browser -- vite : HTTP : 5173
+browser -- backend : HTTP REST / WebSocket STOMP : 8080
+backend -- broker : MQTT : 1883
+backend -- database : PostgreSQL : 5432
+robot -- broker : MQTT : 1883\nRede local
+database -- postgresdata : armazenamento persistente
+broker -- mqttdata : armazenamento persistente
+
+@enduml

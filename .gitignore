@@ -341,4 +341,5 @@ TSWLatexianTemp*
 # Sistema operacional
 .DS_Store
 Thumbs.db
-
+.venv/
+site/

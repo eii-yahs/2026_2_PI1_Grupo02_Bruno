@@ -1,0 +1,52 @@
+@import "tailwindcss";
+
+@theme {
+  --color-page: #171918;
+  --color-surface: #202321;
+  --color-surface-raised: #272a27;
+  --color-surface-low: #191c1a;
+  --color-line: #3c403b;
+  --color-text: #e7e4dc;
+  --color-secondary: #b2b3aa;
+  --color-muted: #858981;
+  --color-cyan: #8fbaad;
+  --color-green: #a6c58a;
+  --color-amber: #d6a766;
+  --color-danger: #d47c6c;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-display: 'Barlow Condensed', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --text-caption: 0.75rem;
+  --text-small: 0.8125rem;
+  --text-body: 0.9375rem;
+  --radius-control: 3px;
+  --radius-card: 4px;
+}
+
+@layer base {
+  :root {
+    --cyan: var(--color-cyan);
+    --green: var(--color-green);
+    --amber: var(--color-amber);
+    --red: var(--color-danger);
+    --surface: var(--color-surface);
+    --surface-raised: var(--color-surface-raised);
+    --line: var(--color-line);
+    --text: var(--color-text);
+    --text-secondary: var(--color-secondary);
+    --text-muted: var(--color-muted);
+    --mono: var(--font-mono);
+    color-scheme: dark;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * { box-sizing: border-box; }
+  html { @apply min-h-full bg-page font-sans text-text; }
+  body { @apply m-0 min-h-screen min-w-80; }
+  button, select { font: inherit; }
+  button:focus-visible, select:focus-visible, a:focus-visible { @apply outline-2 outline-offset-[3px] outline-amber; }
+  ::selection { @apply bg-amber/40 text-white; }
+}

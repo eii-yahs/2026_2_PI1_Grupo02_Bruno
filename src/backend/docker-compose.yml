@@ -1,0 +1,70 @@
+services:
+  database:
+    image: postgres:17-alpine
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-ratocego}
+      POSTGRES_USER: ${DATABASE_USERNAME:-ratocego}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-ratocego}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    user: "0:0"
+    entrypoint: ["/bin/sh"]
+    command:
+      - -c
+      - |
+        if [ -s /mosquitto/data/passwordfile ]; then
+          mosquitto_passwd -b /mosquitto/data/passwordfile "$${MQTT_USERNAME}" "$${MQTT_PASSWORD}"
+        else
+          rm -f /mosquitto/data/passwordfile &&
+          mosquitto_passwd -c -b /mosquitto/data/passwordfile "$${MQTT_USERNAME}" "$${MQTT_PASSWORD}"
+        fi &&
+        chown mosquitto:mosquitto /mosquitto/data/passwordfile &&
+        chmod 0600 /mosquitto/data/passwordfile &&
+        exec mosquitto -c /mosquitto/config/mosquitto.conf
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto_data:/mosquitto/data
+    restart: unless-stopped
+    environment:
+      MQTT_USERNAME: ${MQTT_USERNAME:?Define MQTT_USERNAME in src/backend/.env}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:?Define MQTT_PASSWORD in src/backend/.env}
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      DATABASE_URL: jdbc:postgresql://database:5432/${DATABASE_NAME:-ratocego}
+      DATABASE_USERNAME: ${DATABASE_USERNAME:-ratocego}
+      DATABASE_PASSWORD: ${DATABASE_PASSWORD:-ratocego}
+      MQTT_SERVER_URI: tcp://mosquitto:1883
+      MQTT_USERNAME: ${MQTT_USERNAME:?Define MQTT_USERNAME in src/backend/.env}
+      MQTT_PASSWORD: ${MQTT_PASSWORD:?Define MQTT_PASSWORD in src/backend/.env}
+      BATTERY_CRITICAL_VOLTAGE_VOLTS: ${BATTERY_CRITICAL_VOLTAGE_VOLTS:-6.6}
+      BATTERY_RECOVERY_VOLTAGE_VOLTS: ${BATTERY_RECOVERY_VOLTAGE_VOLTS:-6.8}
+    depends_on:
+      database:
+        condition: service_healthy
+      mosquitto:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  mosquitto_data:

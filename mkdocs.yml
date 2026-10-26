@@ -1,0 +1,44 @@
+site_name: PI1 - Grupo 02
+site_description: Documentação do Projeto Integrador 1 - Micromouse
+site_url: https://fcte-pi1.github.io/2026_2_PI1_Grupo02_Bruno/
+
+theme:
+  name: material
+  language: pt-BR
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.highlight
+    - content.code.copy
+
+nav:
+  - Início: README.md
+
+  - Especificações:
+      - TAP: TAP.md
+      - Requisitos: Requisitos.md
+      - Histórias de Usuário: HUs.md
+      - EAP: EAP.md
+
+  - Solução:
+      - Estrutura: Projeto conceitual de estruturas.md
+      - Energia: Projeto conceitual de energia.md
+      - Hardware: Projeto conceitual de hardware.md
+      - Software: Projeto conceitual de software.md
+
+  - Planejamento:
+      - Cronograma: Cronograma.md
+      - Orçamento: Orçamento.md
+
+  - Validação:
+      - Testes de estrutura: Testes de estrutura.md
+      - Testes de energia: Testes de energia.md
+      - Testes de hardware: Testes de hardware.md
+      - Testes de software: Testes de software.md
+      - Testes de integração: Testes de integração.md
+      - Avaliação de desempenho: Avaliação de desempenho.md
+
+  - Entregas:
+      - Relatório final: Relatório de encerramento do projeto.md

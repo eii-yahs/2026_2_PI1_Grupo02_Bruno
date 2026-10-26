@@ -1,0 +1,15 @@
+{
+  "eventId": 2,
+  "runId": 1,
+  "sequence": 1,
+  "timestamp": "2026-10-09T14:00:01Z",
+  "position": {
+    "row": 0,
+    "column": 1,
+    "heading": "EAST"
+  },
+  "distanceTravelledMeters": 0.25,
+  "currentSpeedMetersPerSecond": 0.5,
+  "batteryVoltageVolts": 7.4,
+  "currentMilliAmps": 250
+}

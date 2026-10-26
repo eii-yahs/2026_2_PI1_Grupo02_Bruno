@@ -1,0 +1,80 @@
+@startuml
+!pragma layout smetana
+title Diagrama de componentes da solução de software
+top to bottom direction
+skinparam componentStyle uml2
+skinparam linetype ortho
+skinparam shadowing false
+skinparam defaultFontName Arial
+skinparam package {
+  BackgroundColor #F8FAFC
+  BorderColor #64748B
+  FontColor #0F172A
+}
+skinparam component {
+  BackgroundColor #F5F7FF
+  BorderColor #4054A5
+  FontColor #172554
+}
+skinparam interface {
+  BackgroundColor #FFFFFF
+  BorderColor #475569
+  FontColor #334155
+}
+skinparam ArrowColor #475569
+skinparam ArrowFontColor #334155
+
+component "Robô Rato Cego\nSistema embarcado" as robot
+component "Eclipse Mosquitto\nBroker MQTT" as broker
+
+package "Aplicação de software local" {
+  package "Backend — Spring Boot" {
+    component "RunController\nAPI REST" as rest
+    component "RunLifecycleService\nCiclo da execução" as lifecycle
+    component "RunQueryService\nConsultas REST" as query
+    component "TelemetryService\nProcessamento de telemetria" as telemetry
+    component "MqttRunListener" as runlistener
+    component "MqttTelemetryListener" as telemlistener
+    component "MqttMessagePublisherAdapter" as mqttpublisher
+    component "MqttCommandPublicationListener\nAFTER_COMMIT" as commandlistener
+    component "MqttCommandPublicationRequested\nSpring application event" as commandevent
+    component "WebSocketTelemetryAdapter" as wsadapter
+    component "WebSocketUpdateEventListener\nAFTER_COMMIT" as wslistener
+    component "WebSocketUpdateEvent\nSpring application event" as updateevent
+    component "RunRepository\nTelemetrySampleRepository" as repositories
+    component "RunMapper / TelemetryMapper\nMqttPayloadParser" as parsing
+    interface "MessagePublisher" as messageport
+    interface "TelemetryPublisher" as telemetryport
+  }
+  component "Frontend React\nNavegador do usuário" as frontend
+  database "PostgreSQL\nBanco relacional local" as database
+}
+
+frontend --> rest : REST
+rest --> lifecycle
+rest --> query
+runlistener --> lifecycle
+telemlistener --> telemetry
+broker --> runlistener : MQTT eventos de ciclo
+broker --> telemlistener : MQTT telemetria
+robot <--> broker : MQTT
+lifecycle ..> commandevent : solicita publicação
+commandevent --> commandlistener : AFTER_COMMIT
+commandlistener ..> messageport
+mqttpublisher ..|> messageport
+mqttpublisher --> broker : MQTT comandos
+lifecycle --> repositories
+query --> repositories
+query ..> parsing
+telemetry --> repositories
+repositories --> database : Spring Data JPA
+telemetry ..> parsing
+lifecycle ..> parsing
+telemetry ..> updateevent : publishes update
+lifecycle ..> updateevent : publishes update
+wslistener ..> telemetryport : forwards after commit
+updateevent --> wslistener : transactional listener
+wsadapter ..|> telemetryport
+wsadapter --> frontend : STOMP / WebSocket
+
+@enduml

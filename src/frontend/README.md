@@ -1,20 +1,19 @@
-# _Frontend_
+# Frontend
 
-Esta pasta deverá armazenar arquivos referentes a:
+Interface do Rato Cego, inicializada pelo [Vite](https://vite.dev/) com React, TypeScript, `@vitejs/plugin-react` e Tailwind CSS 4 pelo plugin oficial `@tailwindcss/vite`.
 
-- Código-fonte da interface: componentes, páginas, estilos e lógica de apresentação, organizados conforme o framework utilizado ([React](https://react.dev/), [Vue](https://vuejs.org/), [Angular](https://angular.io/) etc.).
-- Arquivos de marcação e estilo estáticos: `index.html`, arquivos `.css`, `.scss` ou `.sass` de estilização global.
-- Arquivos de definição de dependências: `package.json` e `package-lock.json` (ou `yarn.lock`) com todas as bibliotecas utilizadas.
-- Arquivos de configuração do bundler/toolchain: `vite.config.js`, `webpack.config.js`, `tsconfig.json` etc.
-- Arquivos de configuração de ambiente: `.env.example` com as variáveis de ambiente públicas necessárias (ex.: URL base da API).
-- Arquivos de containerização: `Dockerfile` e `docker-compose.yml`, caso a aplicação seja servida via contêiner.
+## Requisitos
 
-Evite incluir:
+- Node.js 22.12 ou superior (compatível com Vite 8)
+- npm
 
-- Dependências instaladas: a pasta `node_modules/` deve ser gerada localmente via `npm install` ou equivalente e nunca incluída no repositório.
-- Artefatos de build: diretórios como `dist/`, `build/` ou `.next/` são gerados pelo processo de compilação e não devem ser versionados.
-- Arquivos de configuração pessoal: arquivos como `.directory` (Linux/KDE) ou configurações locais de editor (ex.: `.vscode/settings.json`), salvo configurações compartilhadas como `.editorconfig`.
-- Credenciais e segredos: arquivos `.env` com valores reais nunca devem ser versionados.
+## Executar
 
-> [!WARNING]
-> **Não acrescente arquivos referentes ao _backend_ nesta pasta.** Eles deverão ser armazenados na pasta [backend](https://github.com/fcte-pi1/template/tree/main/src/backend) deste repositório.
+```bash
+npm install
+npm run dev
+```
+
+O servidor de desenvolvimento encaminha `/api` para `http://localhost:8080` e WebSocket em `/ws` para o backend local. A URL e o caminho finais deverão acompanhar os contratos da API/WebSocket quando forem implementados.
+
+Os diretórios `api`, `components`, `models` e `realtime` seguem a organização apresentada no diagrama de pacotes; os módulos serão preenchidos conforme as funcionalidades forem implementadas.

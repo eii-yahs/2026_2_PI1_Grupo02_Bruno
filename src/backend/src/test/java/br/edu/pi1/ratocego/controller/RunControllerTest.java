@@ -1,0 +1,263 @@
+package br.edu.pi1.ratocego.controller;
+
+import br.edu.pi1.ratocego.dto.rest.RunResponse;
+import br.edu.pi1.ratocego.dto.rest.TelemetrySampleResponse;
+import br.edu.pi1.ratocego.model.Heading;
+import br.edu.pi1.ratocego.model.MazeType;
+import br.edu.pi1.ratocego.model.RunStatus;
+import br.edu.pi1.ratocego.model.Run;
+import br.edu.pi1.ratocego.service.RunQueryService;
+import br.edu.pi1.ratocego.service.RunLifecycleService;
+import br.edu.pi1.ratocego.mapper.RunMapper;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.web.servlet.MockMvc;
+
+import java.math.BigDecimal;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.List;
+import java.util.Optional;
+
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.http.MediaType.APPLICATION_JSON;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+@WebMvcTest(RunController.class)
+class RunControllerTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @MockitoBean
+    private RunQueryService runQueryService;
+
+    @MockitoBean
+    private RunLifecycleService runLifecycleService;
+
+    @MockitoBean
+    private RunMapper runMapper;
+
+    @Test
+    void startRunCreatesAPendingExecution() throws Exception {
+        Run run = new Run();
+        run.setId(17L);
+        run.setStatus(RunStatus.START_REQUESTED);
+        when(runLifecycleService.start(MazeType.GRID_8X4)).thenReturn(run);
+        when(runMapper.toRunResponse(run)).thenReturn(RunResponse.builder().id(17).status(RunStatus.START_REQUESTED).build());
+
+        mockMvc.perform(post("/api/runs").contentType(APPLICATION_JSON).content("{\"mazeType\":\"GRID_8X4\"}"))
+                .andExpect(status().isAccepted())
+                .andExpect(jsonPath("$.id").value(17))
+                .andExpect(jsonPath("$.status").value("START_REQUESTED"));
+    }
+
+    @Test
+    void startRunRejectsMissingMazeType() throws Exception {
+        mockMvc.perform(post("/api/runs").contentType(APPLICATION_JSON).content("{}"))
+                .andExpect(status().isBadRequest());
+
+        verify(runLifecycleService, never()).start(org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void startRunReturnsConflictWhenAnotherExecutionIsActive() throws Exception {
+        when(runLifecycleService.start(MazeType.GRID_4X4)).thenThrow(new IllegalStateException("A run is already active"));
+
+        mockMvc.perform(post("/api/runs").contentType(APPLICATION_JSON).content("{\"mazeType\":\"GRID_4X4\"}"))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void interruptRunReturnsNotFoundForUnknownRun() throws Exception {
+        when(runLifecycleService.interrupt(99L)).thenThrow(new IllegalArgumentException("No run found for runId=99"));
+
+        mockMvc.perform(post("/api/runs/99/interrupt"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void activeRunEndpointReturnsCurrentExecutionOrNotFound() throws Exception {
+        when(runQueryService.findActiveRun()).thenReturn(Optional.of(
+                RunResponse.builder().id(17).status(RunStatus.IN_PROGRESS).build()));
+        mockMvc.perform(get("/api/runs/active"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(17));
+
+        when(runQueryService.findActiveRun()).thenReturn(Optional.empty());
+        mockMvc.perform(get("/api/runs/active"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getAllRunsReturnsStoredRunsFromDifferentMazesAsJson() throws Exception {
+        when(runQueryService.findAllRuns()).thenReturn(List.of(
+                RunResponse.builder()
+                        .id(1)
+                        .status(RunStatus.COMPLETED)
+                        .startedAt(Instant.parse("2026-10-09T14:00:00Z"))
+                        .finishedAt(Instant.parse("2026-10-09T14:02:01Z"))
+                        .duration(Duration.ofSeconds(121))
+                        .mazeRows(4)
+                        .mazeColumns(4)
+                        .challengeCompleted(true)
+                        .distanceTravelledMeters(new BigDecimal("3.8"))
+                        .averageSpeedMetersPerSecond(new BigDecimal("0.2"))
+                        .chargeConsumedMilliampHours(new BigDecimal("260"))
+                        .energyConsumedWattHours(new BigDecimal("1.9"))
+                        .build(),
+                RunResponse.builder()
+                        .id(2)
+                        .status(RunStatus.INTERRUPTED)
+                        .startedAt(Instant.parse("2026-10-09T15:00:00Z"))
+                        .finishedAt(Instant.parse("2026-10-09T15:00:15Z"))
+                        .duration(Duration.ofSeconds(15))
+                        .mazeRows(4)
+                        .mazeColumns(8)
+                        .build()));
+
+        mockMvc.perform(get("/api/runs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(1))
+                .andExpect(jsonPath("$[0].status").value("COMPLETED"))
+                .andExpect(jsonPath("$[0].startedAt").value("2026-10-09T14:00:00Z"))
+                .andExpect(jsonPath("$[0].duration").value("PT2M1S"))
+                .andExpect(jsonPath("$[0].mazeRows").value(4))
+                .andExpect(jsonPath("$[0].mazeColumns").value(4))
+                .andExpect(jsonPath("$[0].challengeCompleted").value(true))
+                .andExpect(jsonPath("$[0].chargeConsumedMilliampHours").value(260))
+                .andExpect(jsonPath("$[1].id").value(2))
+                .andExpect(jsonPath("$[1].status").value("INTERRUPTED"))
+                .andExpect(jsonPath("$[1].mazeColumns").value(8))
+                .andExpect(jsonPath("$[1].challengeCompleted").value(nullValue()));
+    }
+
+    @Test
+    void getAllRunsReturnsEmptyArrayWhenNothingWasStored() throws Exception {
+        when(runQueryService.findAllRuns()).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/runs"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getRunsWithMazeTypeReturnsOnlyRunsOfThatMaze() throws Exception {
+        when(runQueryService.findRunsByMaze(MazeType.GRID_8X4)).thenReturn(List.of(
+                RunResponse.builder().id(2).status(RunStatus.COMPLETED).mazeRows(4).mazeColumns(8).build(),
+                RunResponse.builder().id(5).status(RunStatus.FAILED).mazeRows(4).mazeColumns(8).build()));
+
+        mockMvc.perform(get("/api/runs").param("mazeType", "GRID_8X4"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].id").value(2))
+                .andExpect(jsonPath("$[1].id").value(5))
+                .andExpect(jsonPath("$[*].mazeColumns", everyItem(is(8))));
+
+        verify(runQueryService, never()).findAllRuns();
+    }
+
+    @Test
+    void getRunsWithMazeTypeReturnsEmptyArrayWhenMazeHasNoRuns() throws Exception {
+        when(runQueryService.findRunsByMaze(MazeType.GRID_12X4)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/runs").param("mazeType", "GRID_12X4"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
+    }
+
+    @Test
+    void getRunsRejectsUnknownMazeType() throws Exception {
+        mockMvc.perform(get("/api/runs").param("mazeType", "GRID_99X4"))
+                .andExpect(status().isBadRequest());
+
+        verify(runQueryService, never()).findAllRuns();
+    }
+
+    @Test
+    void getRunByIdReturnsTheRequestedRun() throws Exception {
+        when(runQueryService.findRunById(1L)).thenReturn(Optional.of(RunResponse.builder()
+                .id(1)
+                .status(RunStatus.COMPLETED)
+                .startedAt(Instant.parse("2026-10-09T14:00:00Z"))
+                .finishedAt(Instant.parse("2026-10-09T14:02:01Z"))
+                .duration(Duration.ofSeconds(121))
+                .mazeRows(4)
+                .mazeColumns(4)
+                .challengeCompleted(true)
+                .build()));
+
+        mockMvc.perform(get("/api/runs/1"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.status").value("COMPLETED"))
+                .andExpect(jsonPath("$.duration").value("PT2M1S"))
+                .andExpect(jsonPath("$.mazeRows").value(4))
+                .andExpect(jsonPath("$.mazeColumns").value(4))
+                .andExpect(jsonPath("$.challengeCompleted").value(true));
+    }
+
+    @Test
+    void getRunByIdReturnsNotFoundWhenRunDoesNotExist() throws Exception {
+        when(runQueryService.findRunById(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/runs/99"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void getRunTelemetryReturnsSamplesInSequenceOrder() throws Exception {
+        when(runQueryService.findRunTelemetry(1L)).thenReturn(Optional.of(List.of(
+                TelemetrySampleResponse.builder()
+                        .sequence(1)
+                        .recordedAt(Instant.parse("2026-10-09T14:00:01Z"))
+                        .row(0)
+                        .column(0)
+                        .heading(Heading.EAST)
+                        .distanceTravelledMeters(new BigDecimal("0.25"))
+                        .currentSpeedMetersPerSecond(new BigDecimal("0.3"))
+                        .batteryVoltageVolts(new BigDecimal("7.4"))
+                        .currentMilliAmps(new BigDecimal("250"))
+                        .build(),
+                TelemetrySampleResponse.builder()
+                        .sequence(2)
+                        .recordedAt(Instant.parse("2026-10-09T14:00:02Z"))
+                        .row(0)
+                        .column(1)
+                        .heading(Heading.EAST)
+                        .distanceTravelledMeters(new BigDecimal("0.5"))
+                        .build())));
+
+        mockMvc.perform(get("/api/runs/1/telemetry"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0].sequence").value(1))
+                .andExpect(jsonPath("$[0].recordedAt").value("2026-10-09T14:00:01Z"))
+                .andExpect(jsonPath("$[0].row").value(0))
+                .andExpect(jsonPath("$[0].column").value(0))
+                .andExpect(jsonPath("$[0].heading").value("EAST"))
+                .andExpect(jsonPath("$[0].batteryVoltageVolts").value(7.4))
+                .andExpect(jsonPath("$[1].sequence").value(2))
+                .andExpect(jsonPath("$[1].column").value(1))
+                .andExpect(jsonPath("$[1].currentSpeedMetersPerSecond").value(nullValue()));
+    }
+
+    @Test
+    void getRunTelemetryReturnsNotFoundWhenRunDoesNotExist() throws Exception {
+        when(runQueryService.findRunTelemetry(99L)).thenReturn(Optional.empty());
+
+        mockMvc.perform(get("/api/runs/99/telemetry"))
+                .andExpect(status().isNotFound());
+    }
+}
