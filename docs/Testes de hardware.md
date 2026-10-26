@@ -2,11 +2,97 @@
 
 ## Testes de _hardware_
 
-> Apresentar com detalhes os testes feitos para conferir se os objetivos do *hardware* foram atendidos, incluindo:
->
-> 1. Processamento (Arduino, ESP32 etc):
->    - Definir interface de desenvolvimento;
->    - Rodar exemplo mínimo.
+#### 1. Processamento (ESP32 — `ESP_WROOM_32`)
+
+Esta etapa teve como objetivo validar o funcionamento básico do microcontrolador **ESP32 (`ESP_WROOM_32`)**, garantindo a comunicação com o ambiente de desenvolvimento, a gravação correta do *firmware* em memória *flash*, a estabilidade da alimentação lógica (`5 V` no pino `VIN` proveniente do regulador integrado do módulo `L298N` e `3,3 V` regulados internamente, conforme `RNF16`) e a execução autônoma do ciclo de controle embarcado (`RF10`, `RNF30`).
+
+#### 1.1. Definição da Interface de Desenvolvimento
+
+Para a programação, compilação e gravação do *firmware* no módulo `ESP_WROOM_32`, foi definida a seguinte infraestrutura de desenvolvimento:
+
+- **Ambiente de Desenvolvimento (IDE):** **Arduino IDE 2.x** (compatível com **PlatformIO**), escolhida pela rapidez de prototipagem em C/C++, suporte nativo às interrupções de *hardware* (`IRAM_ATTR`) e integração direta com os periféricos do ESP32.
+- **Core / Pacote de Placa:** **Espressif Systems Arduino ESP32 Core v3.x** (placa configurada como `ESP32 Dev Module`), evidenciado pelo uso da nova API do periférico de PWM por *hardware* `ledcAttach(pino, frequencia, resolucao)` e `ledcWrite(pino, duty)`.
+- **Interface de Gravação e Depuração:** Conexão USB-Serial (conversor UART integrado à placa de desenvolvimento) operando com taxa de transmissão (*baud rate*) de `115200 bps`.
+- **Bibliotecas Utilizadas no Firmware:**
+  - `<WiFi.h>` e `<WebServer.h>` (nativas do Core ESP32): para criação do Ponto de Acesso sem fio (`WiFi.softAP`) e servidor HTTP na porta `80` para comando e telemetria de bancada;
+  - `<Wire.h>` (nativa do Core ESP32): para comunicação no barramento I²C (`SDA = GPIO21`, `SCL = GPIO22`);
+  - `<Adafruit_INA219.h>`: para leitura de tensão e corrente elétrica do barramento principal da bateria LiPo 2S.
+
+#### 1.2. Execução do Exemplo Mínimo (*Bring-up* do Microcontrolador)
+
+Antes de acionar os motores na malha de navegação completa, foi executado um teste mínimo no `ESP_WROOM_32` para validar:
+1. O *boot* sem falhas ou *resets* por queda de tensão (*brownout*);
+2. O mapeamento dos pinos de entrada/saída digital e PWM (`GPIO4`, `GPIO16`, `GPIO17`, `GPIO18`, `GPIO19`, `GPIO2`), entradas analógicas do conversor ADC de 12 bits (`GPIO36`, `GPIO39`, `GPIO34`) e pinos com interrupção externa na borda de subida (`GPIO32`, `GPIO33`, `GPIO25`, `GPIO26`);
+3. A inicialização do barramento I²C (`Wire.begin(21, 22)`) com reconhecimento do sensor `INA219`;
+4. A criação da rede sem fio local (`SSID: "MicroMouse"`) e resposta a requisições HTTP nos *endpoints* `/` (página de supervisão), `/dados` (JSON de leituras), `/i` (iniciar) e `/p` (parar).
+
+**Trecho do exemplo mínimo validado no ESP32:**
+
+```cpp
+#include <WiFi.h>
+#include <WebServer.h>
+#include <Wire.h>
+#include <Adafruit_INA219.h>
+
+const char* WIFI_NOME  = "MicroMouse";
+const char* WIFI_SENHA = "01010101";
+
+WebServer server(80);
+Adafruit_INA219 ina219;
+
+void setup() {
+  Serial.begin(115200);
+
+  // Inicializa barramento I2C nos pinos definidos no esquemático (SDA=21, SCL=22)
+  Wire.begin(21, 22);
+  bool inaOk = ina219.begin();
+
+  // Sobe ponto de acesso Wi-Fi embarcado e servidor HTTP de teste
+  WiFi.softAP(WIFI_NOME, WIFI_SENHA);
+  server.on("/status", [inaOk]() {
+    String msg = String("{\"esp32\":\"ok\",\"ina219\":") + (inaOk ? "true" : "false") + "}";
+    server.send(200, "application/json", msg);
+  });
+  server.begin();
+}
+
+void loop() {
+  server.handleClient();
+  delay(10);
+}
+
+
+
+```
+#### 1.3. Componentes de Hardware Validados a partir do Código de Teste
+
+A execução do código de teste embarcado permitiu validar, de forma integrada, tanto os periféricos internos do microcontrolador quanto os módulos eletrônicos e eletromecânicos conectados à placa do Micromouse:
+
+1. **Microcontrolador ESP32 (`ESP_WROOM_32`) e Periféricos Internos:**
+   **Unidade de Processamento e Memória Flash (`PROGMEM`):** Validada pela execução contínua do laço principal (`setup()` e `loop()`) e pelo armazenamento e carregamento da interface HTML de monitoramento diretamente da memória de programa.
+   **Transceptor Wi-Fi de 2,4 GHz:** Validado no modo Ponto de Acesso (`WiFi.softAP` com `SSID: "MicroMouse"`), mantendo conexão estável com o dispositivo do operador e respondendo às requisições HTTP na porta `80` nos *endpoints* de comando (`/i` e `/p`) e de telemetria (`/dados` a cada `200 ms`).
+   **Conversor Analógico-Digital (ADC de 12 bits):** Validado por meio da leitura contínua das portas analógicas `GPIO36`, `GPIO39` e `GPIO34` com faixa de conversão de `0` a `4095`.
+   **Periférico de PWM por Hardware (`LEDC`):** Validado na geração de sinais PWM a `20 kHz` com resolução de 8 bits (`0` a `255`) nos pinos `GPIO4` e `GPIO2` (`ledcAttach` e `ledcWrite`).
+   **Controlador de Interrupções Externas (`GPIOs` com `IRAM_ATTR`):** Validado na detecção de pulsos em borda de subida (`RISING`) com resistores internos de *pull-up* (`INPUT_PULLUP`) ativados nos pinos `GPIO32`, `GPIO33`, `GPIO25` e `GPIO26`.
+   **Controlador de Barramento I²C (`Wire`):** Validado na comunicação serial síncrona através dos pinos `GPIO21` (`SDA`) e `GPIO22` (`SCL`).
+
+2. **Módulo Sensor de Corrente e Tensão (`INA219`):**
+   Validado o endereçamento e a comunicação via barramento I²C (`ina219.begin()`), bem como a aquisição em tempo real da tensão do barramento principal em volts (`getBusVoltage_V()`) e da corrente elétrica total consumida pelo robô em miliampères (`getCurrent_mA()`).
+
+3. **Três Módulos de Sensores Infravermelhos de Proximidade (`IR1`, `IR2` e `IR3`):**
+   Validados nos pinos `GPIO36` (esquerdo), `GPIO39` (frontal) e `GPIO34` (direito), confirmando a alimentação em `3,3 V`, a resposta analógica proporcional à proximidade dos obstáculos e a correta classificação lógica de presença de parede a partir do limiar calibrado (`LIMITE_PAREDE = 1500`).
+
+4. **Driver de Motor de Ponte H Dupla (`L298N`):**
+   Validado o controle lógico de sentido de rotação pelas portas `IN1` (`GPIO16`), `IN2` (`GPIO17`), `IN3` (`GPIO18`) e `IN4` (`GPIO19`), a modulação de potência pelos pinos de habilitação `ENA` (`GPIO4`) e `ENB` (`GPIO2`), a parada por desenergização (PWM zero) e o funcionamento do regulador linear de `5 V` integrado à placa `L298N`, responsável por alimentar o pino `VIN` do ESP32.
+
+5. **Dois Motores DC N20 com Caixa de Redução (Tração Esquerda e Direita):**
+   Validado o acionamento elétrico reversível de ambos os motores em malha fechada, incluindo deslocamento para frente, paradas, curvas de 90° para a direita e para a esquerda e manobra de meia-volta (180°) em becos sem saída.
+
+6. **Encoders Incrementais de Quadratura Integrados aos Motores (`U4` e `U5`):**
+   Validados os canais A e B do encoder esquerdo (`GPIO32` e `GPIO33`) e do encoder direito (`GPIO25` e `GPIO26`), comprovando a contagem diferencial de pulsos (`ticksE` e `ticksD`), a identificação do sentido de giro e o uso do *feedback* odométrico para corrigir desvios em linha reta e encerrar giros exatamente ao atingir as metas de pulsos (`TICKS_90 = 330` e `TICKS_AVANCO = 250`).
+
+7. **Subsistema de Alimentação, Chave Geral e Capacitores de Filtro:**
+   Validada a operação conjunta da bateria LiPo 2S (`7,4 V` nominais), da chave mecânica de isolamento (`SW1`) e dos capacitores de desacoplamento (`100 µF`, `10 µF` e `100 nF`), garantindo que os picos de corrente durante partidas e reversões dos motores não provocassem quedas de tensão críticas nem reinicializações (*brownout*) no ESP32 com o rádio Wi-Fi ativo.
 
 
 
