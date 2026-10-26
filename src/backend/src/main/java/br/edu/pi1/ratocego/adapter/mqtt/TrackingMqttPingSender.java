@@ -2,7 +2,6 @@ package br.edu.pi1.ratocego.adapter.mqtt;
 
 import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttToken;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttPingSender;
 import org.eclipse.paho.client.mqttv3.internal.ClientComms;
 
@@ -61,23 +60,19 @@ public final class TrackingMqttPingSender
     }
 
     private void checkActivity() {
-        try {
-            comms.checkForActivity(new IMqttActionListener() {
-                @Override
-                public void onSuccess(IMqttToken token) {
-                    activity.receivedControlPacket();
-                }
+        comms.checkForActivity(new IMqttActionListener() {
+            @Override
+            public void onSuccess(IMqttToken token) {
+                activity.receivedControlPacket();
+            }
 
-                @Override
-                public void onFailure(
-                        IMqttToken token,
-                        Throwable exception
-                ) {
-                    // O encerramento da conexão é tratado pelo Paho.
-                }
-            });
-        } catch (MqttException exception) {
-            comms.shutdownConnection(null, exception);
-        }
+            @Override
+            public void onFailure(
+                    IMqttToken token,
+                    Throwable exception
+            ) {
+                // O encerramento da conexão é tratado pelo Paho.
+            }
+        });
     }
 }
