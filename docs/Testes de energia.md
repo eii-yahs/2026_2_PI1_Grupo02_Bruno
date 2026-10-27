@@ -1,20 +1,25 @@
-# Testes de Energia
+# Avaliação do consumo elétrico
 
->Apresentar com detalhes os testes feitos para conferir se as demandas energéticas do projeto foram atendidas.
+## Método
 
-| **ID** | **Descrição** | **Data de Início** | **Data de Conclusão** | **Responsável** | **Resultados Esperados** | **Resultados Obtidos** | **Aprovação Interna (S/N)** | **Aprovação do Orientador (S/N)** | **Observações** |
-|:------:|---------------|--------------------|-----------------------|-----------------|--------------------------|------------------------|:---------------------------:|:--------------------------------:|-----------------|
-| 2.1 | | | | | | | | | |
-| 2.2 | | | | | | | | | |
-| 2.3 | | | | | | | | | |
-| 2.4 | | | | | | | | | |
-| 2.5 | | | | | | | | | |
-| 2.6 | | | | | | | | | |
-| 2.7 | | | | | | | | | |
-| 2.8 | | | | | | | | | |
-| 2.9 | | | | | | | | | |
-| 2.10 | | | | | | | | | |
-| 2.12 | | | | | | | | | |
-| 2.13 | | | | | | | | | |
-| 2.15 | | | | | | | | | |
-| 2.16 | | | | | | | | | |
+A avaliação considerou 30 minutos de operação do micromouse, alimentado por uma bateria LiPo 2S de 800 mAh. Foram utilizados dados simulados de corrente, com registros a cada 10 segundos, totalizando 181 amostras.
+
+O código preparado para o ensaio físico mantém os dois motores acionados com PWM fixo e realiza a leitura do INA219 a cada segundo. O ESP32 utiliza `millis()` para controlar o tempo e grava a corrente e o instante da leitura em um arquivo CSV na memória interna.
+
+O consumo acumulado foi calculado em Python pela integração da corrente pelo método dos trapézios.
+
+## Resultados
+
+A corrente média foi de 937,3 mA. Ao final dos 30 minutos, o consumo calculado foi de 468,7 mAh, equivalente a 58,6% da capacidade nominal da bateria.
+
+| Parâmetro | Resultado |
+| :--- | ---: |
+| Duração | 30 min |
+| Corrente média | 937,3 mA |
+| Consumo acumulado | 468,7 mAh |
+| Capacidade nominal da bateria | 800 mAh |
+| Parcela consumida | 58,6% |
+
+## Conclusão
+
+Para a corrente adotada, o consumo em 30 minutos ficou abaixo da capacidade nominal da bateria de 800 mAh. O resultado indica que essa capacidade é suficiente para o cenário considerado. A confirmação da autonomia do robô depende da medição em funcionamento, pois a carga dos motores pode ser maior no contexto do labirinto.
