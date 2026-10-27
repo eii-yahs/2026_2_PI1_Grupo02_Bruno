@@ -1,13 +1,24 @@
 package br.edu.pi1.ratocego.config;
 
 import br.edu.pi1.ratocego.adapter.mqtt.ManagedMqttConnection;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.junit.jupiter.api.Test;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.mqtt.support.MqttHeaders;
 import org.springframework.messaging.MessageHandler;
 import org.springframework.messaging.support.MessageBuilder;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import java.time.Duration;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -65,5 +76,74 @@ class MqttConfigTest {
                 "ratocego/commands",
                 "{\"command\":\"stop\"}"
         );
+    }
+
+    @Test
+    void rejectsOutboundMessagesWithoutTopic() {
+        MessageHandler handler = new MqttConfig().mqttOutbound(mock(ManagedMqttConnection.class));
+        var message = MessageBuilder.withPayload("payload").build();
+
+        assertThrows(NullPointerException.class, () -> handler.handleMessage(message));
+    }
+
+    @Test
+    void wrapsMqttPublicationFailures() throws Exception {
+        ManagedMqttConnection connection = mock(ManagedMqttConnection.class);
+        doThrow(new org.eclipse.paho.client.mqttv3.MqttException(1))
+                .when(connection).publish(anyString(), anyString());
+        MessageHandler handler = new MqttConfig().mqttOutbound(connection);
+        var message = MessageBuilder.withPayload("payload")
+                .setHeader(MqttHeaders.TOPIC, "ratocego/commands")
+                .build();
+
+        var exception = assertThrows(IllegalStateException.class, () -> handler.handleMessage(message));
+        assertEquals("Falha ao publicar no tópico ratocego/commands", exception.getMessage());
+    }
+
+    @Test
+    void enforcesRequiredMqttTimingSettings() {
+        MqttConfig config = new MqttConfig();
+        DirectChannel channel = new DirectChannel();
+
+        assertThrows(IllegalArgumentException.class, () -> config.managedMqttConnection(
+                "tcp://localhost:1883", "test", "ratocego", "user", "password",
+                10, 11, 15, 5_000, channel, channel, channel, channel));
+        assertThrows(IllegalArgumentException.class, () -> config.managedMqttConnection(
+                "tcp://localhost:1883", "test", "ratocego", "user", "password",
+                10, 10, 16, 5_000, channel, channel, channel, channel));
+    }
+
+    @Test
+    void buildsConnectionWithConfiguredTopicsAndOptions() throws Exception {
+        MqttConfig config = new MqttConfig();
+        DirectChannel telemetry = new DirectChannel();
+        DirectChannel started = new DirectChannel();
+        DirectChannel finished = new DirectChannel();
+        DirectChannel interrupted = new DirectChannel();
+        ManagedMqttConnection connection = config.managedMqttConnection(
+                "tcp://localhost:1883", "backend-test", "ratocego", "robot", "secret",
+                8, 10, 15, 2_000, telemetry, started, finished, interrupted);
+
+        try {
+            assertEquals(Duration.ofSeconds(15), ReflectionTestUtils.getField(connection, "silenceTimeout"));
+            assertEquals(2_000L, ReflectionTestUtils.getField(connection, "completionTimeoutMs"));
+            assertEquals(Map.of(
+                    "ratocego/runs/+/telemetry", telemetry,
+                    "ratocego/runs/+/started", started,
+                    "ratocego/runs/+/finished", finished,
+                    "ratocego/runs/+/interrupted", interrupted),
+                    ReflectionTestUtils.getField(connection, "routes"));
+
+            MqttConnectOptions options = (MqttConnectOptions) ReflectionTestUtils.getField(connection, "options");
+            assertEquals("robot", options.getUserName());
+            assertEquals("secret", new String(options.getPassword()));
+            assertEquals(MqttConnectOptions.MQTT_VERSION_3_1_1, options.getMqttVersion());
+            assertEquals(8, options.getConnectionTimeout());
+            assertEquals(10, options.getKeepAliveInterval());
+            assertFalse(options.isAutomaticReconnect());
+            assertTrue(options.isCleanSession());
+        } finally {
+            connection.destroy();
+        }
     }
 }

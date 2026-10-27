@@ -21,6 +21,11 @@ import java.util.concurrent.TimeUnit;
 public final class ManagedMqttConnection
         implements SmartLifecycle, DisposableBean {
 
+    @FunctionalInterface
+    private interface MqttClientFactory {
+        MqttAsyncClient create(MqttActivity activity) throws MqttException;
+    }
+
     private static final Logger log =
             LoggerFactory.getLogger(ManagedMqttConnection.class);
 
@@ -60,6 +65,35 @@ public final class ManagedMqttConnection
             Map<String, MessageChannel> routes
     ) throws MqttException {
 
+        this(activity -> new MqttAsyncClient(
+                        brokerUri,
+                        clientId,
+                        new MemoryPersistence(),
+                        new TrackingMqttPingSender(activity)),
+                options,
+                silenceTimeout,
+                completionTimeoutMs,
+                routes);
+    }
+
+    ManagedMqttConnection(
+            MqttAsyncClient client,
+            MqttConnectOptions options,
+            Duration silenceTimeout,
+            long completionTimeoutMs,
+            Map<String, MessageChannel> routes
+    ) throws MqttException {
+        this(activity -> client, options, silenceTimeout, completionTimeoutMs, routes);
+    }
+
+    private ManagedMqttConnection(
+            MqttClientFactory clientFactory,
+            MqttConnectOptions options,
+            Duration silenceTimeout,
+            long completionTimeoutMs,
+            Map<String, MessageChannel> routes
+    ) throws MqttException {
+
         this.options = options;
         this.silenceTimeout = silenceTimeout;
         this.completionTimeoutMs = completionTimeoutMs;
@@ -68,12 +102,7 @@ public final class ManagedMqttConnection
         this.reconnectPolicy = new MqttReconnectPolicy();
         this.activity = new MqttActivity();
 
-        this.client = new MqttAsyncClient(
-                brokerUri,
-                clientId,
-                new MemoryPersistence(),
-                new TrackingMqttPingSender(activity)
-        );
+        this.client = clientFactory.create(activity);
 
         client.setCallback(new MqttCallback() {
             @Override
