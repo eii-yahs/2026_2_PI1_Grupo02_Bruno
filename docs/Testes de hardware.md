@@ -71,16 +71,12 @@ A execução do código de teste embarcado permitiu validar, de forma integrada,
 1. **Microcontrolador ESP32 (`ESP_WROOM_32`) e Periféricos Internos:**
    **Unidade de Processamento e Memória Flash (`PROGMEM`):** Validada pela execução contínua do laço principal (`setup()` e `loop()`) e pelo armazenamento e carregamento da interface HTML de monitoramento diretamente da memória de programa.
    **Transceptor Wi-Fi de 2,4 GHz:** Validado no modo Ponto de Acesso (`WiFi.softAP` com `SSID: "MicroMouse"`), mantendo conexão estável com o dispositivo do operador e respondendo às requisições HTTP na porta `80` nos *endpoints* de comando (`/i` e `/p`) e de telemetria (`/dados` a cada `200 ms`).
-   **Conversor Analógico-Digital (ADC de 12 bits):** Validado por meio da leitura contínua das portas analógicas `GPIO36`, `GPIO39` e `GPIO34` com faixa de conversão de `0` a `4095`.
-   **Periférico de PWM por Hardware (`LEDC`):** Validado na geração de sinais PWM a `20 kHz` com resolução de 8 bits (`0` a `255`) nos pinos `GPIO4` e `GPIO2` (`ledcAttach` e `ledcWrite`).
-   **Controlador de Interrupções Externas (`GPIOs` com `IRAM_ATTR`):** Validado na detecção de pulsos em borda de subida (`RISING`) com resistores internos de *pull-up* (`INPUT_PULLUP`) ativados nos pinos `GPIO32`, `GPIO33`, `GPIO25` e `GPIO26`.
-   **Controlador de Barramento I²C (`Wire`):** Validado na comunicação serial síncrona através dos pinos `GPIO21` (`SDA`) e `GPIO22` (`SCL`).
 
 2. **Módulo Sensor de Corrente e Tensão (`INA219`):**
    Validado o endereçamento e a comunicação via barramento I²C (`ina219.begin()`), bem como a aquisição em tempo real da tensão do barramento principal em volts (`getBusVoltage_V()`) e da corrente elétrica total consumida pelo robô em miliampères (`getCurrent_mA()`).
 
-3. **Três Módulos de Sensores Infravermelhos de Proximidade (`IR1`, `IR2` e `IR3`):**
-   Validados nos pinos `GPIO36` (esquerdo), `GPIO39` (frontal) e `GPIO34` (direito), confirmando a alimentação em `3,3 V`, a resposta analógica proporcional à proximidade dos obstáculos e a correta classificação lógica de presença de parede a partir do limiar calibrado (`LIMITE_PAREDE = 1500`).
+3. **Quatro Módulos de Sensores Infravermelhos de Proximidade (`IR1`, `IR2`, `IR3` e `IR4` ):**
+   Validados nos pinos `GPIO36` (esquerdo), `GPIO39` (frontal), `GPIO34` (direito) e `GPIO35` (frontal invertida), confirmando a alimentação em `3,3 V`, a resposta analógica proporcional à proximidade dos obstáculos e a correta classificação lógica de presença de parede a partir do limiar calibrado (`LIMITE_PAREDE = 1500`).
 
 4. **Driver de Motor de Ponte H Mini (`MX1508`):**
    Validado o controle lógico de sentido de rotação pelas portas `IN1` (`GPIO16`), `IN2` (`GPIO17`), `IN3` (`GPIO18`) e `IN4` (`GPIO19`), a parada por desenergização (PWM zero).
@@ -379,42 +375,7 @@ Essas informações são atualizadas durante a execução do programa e permanec
 
 Como os dados são mantidos em memória volátil, eles são perdidos quando o dispositivo é desligado ou reiniciado.
 
-### 3.2. Armazenamento e Validação dos Dados dos Sensores
-
-As leituras dos sensores são armazenadas temporariamente em variáveis e processadas antes de serem utilizadas pelo algoritmo de navegação.
-
-No caso dos sensores infravermelhos, os valores analógicos são obtidos por meio da função `analogRead()`:
-
-```cpp
-rawE = analogRead(IR_ESQ);
-rawF = analogRead(IR_FRENTE);
-rawD = analogRead(IR_DIR);
-rawT = analogRead(IR_TRAS);
-```
-
-Em seguida, os valores são comparados com um limiar previamente definido:
-
-```cpp
-paredeE = rawE > LIMITE_PAREDE;
-paredeF = rawF > LIMITE_PAREDE;
-paredeD = rawD > LIMITE_PAREDE;
-paredeT = rawT > LIMITE_PAREDE;
-```
-
-Esse processamento transforma os valores analógicos em informações booleanas, permitindo que o sistema identifique a presença ou ausência de paredes.
-
-Para os encoders, os pulsos registrados são armazenados em contadores do tipo `volatile long`, atualizados por interrupções de hardware.
-
-```cpp
-volatile long ticksE = 0;
-volatile long ticksD = 0;
-```
-
-Esses valores são utilizados para estimar os deslocamentos das rodas e realizar a correção proporcional de velocidade dos motores.
-
-A validação das leituras é realizada por meio da comparação com os parâmetros de referência definidos no código. Entretanto, o sistema ainda não implementa mecanismos mais avançados de validação, como filtros digitais, detecção de leituras inconsistentes ou armazenamento de históricos para análise posterior.
-
-### 3.3. Disponibilização dos Dados para Telemetria
+### 3.2. Disponibilização dos Dados para Telemetria
 
 Embora os dados não sejam armazenados permanentemente, o sistema permite sua visualização por meio de uma interface web hospedada na própria ESP32.
 
@@ -443,10 +404,10 @@ Como possibilidade de desenvolvimento futuro, poderá ser implementado o armazen
 
 Os atuadores são dois motores DC N20 com caixa de redução e *encoder* de quadratura, acionados pela mini ponte H MX1508. O ESP32 define o sentido de giro pelas entradas IN1 a IN4 e a velocidade pelo PWM nos pinos de habilitação ENA e ENB.
 
-| Motor | Sentido | Velocidade (PWM) | *Encoder* (A / B) |
+| Motor | Sentido | *Encoder* (A / B) |
 | :---- | :---- | :---- | :---- |
-| Esquerdo | IN1 (GPIO16) / IN2 (GPIO17) | ENA (GPIO4) | GPIO32 / GPIO33 |
-| Direito | IN3 (GPIO18) / IN4 (GPIO19) | ENB (GPIO2) | GPIO25 / GPIO26 |
+| Esquerdo | IN1 (GPIO16) / IN2 (GPIO17) | GPIO32 / GPIO33 |
+| Direito | IN3 (GPIO18) / IN4 (GPIO19) | GPIO25 / GPIO26 |
 
 *Tabela 11 – Pinos de acionamento dos motores.*
 
@@ -474,7 +435,7 @@ Fonte: Elaborado pelos autores (2026).
 
 **Requisito associado:** [RF11](http://requisitos.md#rf11).
 
-O PWM é gerado pelo periférico LEDC do ESP32 (ledcAttach e ledcWrite) nos pinos ENA (GPIO4) e ENB (GPIO2), a **20 kHz** e com **8 bits** de resolução (0 a 255). 
+O PWM é gerado pelo periférico LEDC do ESP32 (ledcAttach e ledcWrite) diretamente nos pinos de entrada dos motores, a **20 kHz** e com **8 bits** de resolução (0 a 255). 
 
 | *Duty cycle* | Valor em ledcWrite |
 | :---: | :---: |
@@ -487,7 +448,7 @@ O PWM é gerado pelo periférico LEDC do ESP32 (ledcAttach e ledcWrite) nos pino
 
 Fonte: Elaborado pelos autores (2026).
 
-**Resultado.** O PWM nos pinos ENA e ENB controlou a velocidade dos dois motores, nos dois sentidos de giro.
+**Resultado.** O PWM nos pinos controlou a velocidade dos dois motores, nos dois sentidos de giro.
 
 ## **4.3. Acionamento com base nos dados dos sensores (ID 3.14)**
 
@@ -497,7 +458,7 @@ Os motores são acionados a partir de dois sensores:
 
 * ***Encoders*****:** os pulsos de cada roda (ticksE e ticksD) são usados para corrigir desvios em linha reta e para encerrar cada movimento ao atingir a meta de pulsos: TICKS\_AVANCO \= 250 no avanço e TICKS\_90 \= 330 no giro de 90°.
 
-* **Sensores IR:** as leituras das GPIOs 36, 39 e 34 são comparadas com o limiar LIMITE\_PAREDE \= 1500 para indicar parede à esquerda, à frente e à direita. A partir dessa informação, o robô decide se avança, gira 90° para a direita ou para a esquerda.
+* **Sensores IR:** as leituras das GPIOs 36, 39, 34 e 35 são comparadas com o limiar LIMITE\_PAREDE \= 1500 para indicar parede à esquerda, à frente e à direita. A partir dessa informação, o robô decide se avança, gira 90° para a direita ou para a esquerda.
 
 
 
