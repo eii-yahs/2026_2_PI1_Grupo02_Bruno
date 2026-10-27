@@ -501,6 +501,82 @@ Os motores são acionados a partir de dois sensores:
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+## Reavaliação dos Sensores e Implementação da Medição de Distância
+
+Durante o desenvolvimento do Micromouse, foi identificada uma limitação na escolha inicial dos sensores utilizados para a navegação no labirinto. Os sensores selecionados inicialmente possuem a função de detectar a presença de obstáculos, fornecendo apenas informações sobre a existência ou ausência de paredes nas proximidades do robô.
+
+Entretanto, verificou-se posteriormente que essa informação, isoladamente, não seria suficiente para realizar determinadas operações de navegação, especialmente a centralização do robô dentro das células do labirinto. Para executar essa tarefa com maior precisão, é necessário obter informações sobre a distância entre o robô e as paredes adjacentes, permitindo identificar possíveis desvios em relação à posição central da célula.
+
+Dessa forma, **foi identificada a necessidade de incorporar um sensor capaz de realizar medições de distância**, complementando os sensores de presença inicialmente previstos.
+
+### Adoção do Sensor Ultrassônico HC-SR04
+
+Como solução para a limitação identificada, foi proposta a utilização do sensor ultrassônico **HC-SR04**, capaz de estimar a distância até obstáculos por meio da emissão e recepção de ondas ultrassônicas.
+
+Seu funcionamento baseia-se na medição do intervalo de tempo entre a emissão de um pulso ultrassônico e a recepção do sinal refletido por um obstáculo. A partir desse intervalo, é possível calcular a distância utilizando a velocidade aproximada de propagação do som no ar.
+
+A distância é determinada pela expressão:
+
+```math
+d = \frac{t \cdot v}{2}
+```
+
+Em que:
+- **d:** distância entre o sensor e o obstáculo;
+- **t:** tempo de propagação do sinal ultrassônico, considerando ida e volta;
+- **v:** velocidade do som no ar.
+
+A incorporação desse sensor permite obter informações adicionais sobre o posicionamento do robô em relação às paredes do labirinto, contribuindo para o desenvolvimento de estratégias de correção de trajetória e centralização nas células.
+
+### Simulação e Validação Inicial no Wokwi
+
+Para verificar o funcionamento do sensor ultrassônico e sua comunicação com o microcontrolador ESP32, foi desenvolvida uma simulação na plataforma **Wokwi**.
+
+Na simulação, o ESP32 é responsável por acionar o sensor HC-SR04, medir o intervalo de tempo correspondente ao retorno do sinal ultrassônico e calcular a distância até o obstáculo.
+
+Os valores obtidos são apresentados no monitor serial, permitindo acompanhar as medições em tempo real.
+
+Durante os testes, a distância simulada entre o sensor e o obstáculo foi modificada, possibilitando observar a atualização dos valores calculados pelo microcontrolador.
+
+**A simulação demonstrou o funcionamento da rotina de medição de distância**, constituindo uma validação inicial da solução proposta.
+
+O vídeo a seguir apresenta o circuito simulado e o comportamento do sensor diante das alterações de distância.
+
+**Vídeo — Simulação do sensor HC-SR04 com ESP32 no Wokwi**
+
+
+
+https://github.com/user-attachments/assets/0a0e3dde-5a20-4246-ba47-c248fce3d5ab
+
+
+
+### Considerações
+
+A identificação dessa limitação evidenciou a importância de avaliar não apenas a capacidade de detecção de obstáculos, mas também as informações necessárias para executar as estratégias de navegação do Micromouse.
+
+A adoção do sensor ultrassônico representa uma proposta de aprimoramento do sistema de sensoriamento, permitindo avançar no desenvolvimento de mecanismos de posicionamento e correção de trajetória.
+
+Entretanto, a simulação realizada valida inicialmente a leitura de distâncias pelo ESP32, sendo ainda necessária a avaliação do desempenho do sensor em condições reais de operação e de sua adequação às dimensões e características do labirinto.
+
+
+
+
+
+
+
 | **ID** | **Descrição** | **Data de Início** | **Data de Conclusão** | **Responsável** | **Resultados Esperados** | **Resultados Obtidos** | **Aprovação Interna (S/N)** | **Aprovação do Orientador (S/N)** | **Observações** |
 |:------:|---------------|--------------------|-----------------------|-----------------|--------------------------|------------------------|:---------------------------:|:--------------------------------:|-----------------|
 | 3.1 | | | | | | | | | |
