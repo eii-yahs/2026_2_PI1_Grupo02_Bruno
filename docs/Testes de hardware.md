@@ -510,6 +510,61 @@ Os motores são acionados a partir de dois sensores:
 
 
 
+## 5. Comunicações (UART, I²C, Wi-Fi, HTTP e MQTT)
+
+A arquitetura de comunicações do hardware provê suporte tanto à depuração em bancada quanto à integração completa do robô com a aplicação servidora e o painel web de telemetria.
+
+```mermaid
+graph TD
+    subgraph Micromouse Hardware
+        ESP[ESP32 Microcontrolador]
+        INA[INA219 Sensor Energia]
+        ESP <-->|I2C 100 kHz - GPIO 21/22| INA
+        ESP -->|UART Serial 115200 bps| USB[Porta USB Cabo de Bancada]
+    end
+    
+    subgraph Rede Local Sem Fio
+        ESP -->|Wi-Fi 802.11 b/g/n - 2.4 GHz| AP[Roteador / Ponto de Acesso Local]
+    end
+    
+    subgraph Servidor de Aplicacao
+        AP -->|Porta 1883 MQTT| BRK[Eclipse Mosquitto Broker]
+        AP -->|Porta 80 HTTP| WEB[Cliente Navegador / Polling 5 Hz]
+        BRK <-->|Topicos telemetry e run| BE[Backend Spring Boot]
+    end
+```
+
+### 5.1. Transmissão Básica de Dados
+
+Os ensaios de hardware validaram três barramentos físicos de comunicação:
+
+1. **Barramento UART (Serial):**
+   - Taxa padronizada em **115.200 bps** (8 bits de dados, sem paridade, 1 stop bit).
+   - Utilizada para carga de binários e rastreamento de diagnósticos durante os ensaios de bancada.
+   - Emissão de relatórios estruturados de inicialização, tabela de memória e logs de erro de periféricos.
+2. **Barramento I²C (*Inter-Integrated Circuit*):**
+   - Pinos dedicados: GPIO 21 (SDA) e GPIO 22 (SCL).
+   - Frequência de operação calibrada em **100 kHz** com resistores de *pull-up* no módulo INA219.
+   - O ESP32 realiza transações atômicas de leitura dos registradores internos do INA219 (tensão de barramento em milivolts e corrente em miliampères) sem travamento do barramento (*I2C bus timeout* configurado para 50 ms).
+3. **Conexão Sem Fio Wi-Fi:**
+   - Modo de operação: Estação cliente (`WIFI_STA`), conectando-se a um ponto de acesso dedicado na frequência de **2.4 GHz**.
+   - Tempo médio de associação com a rede local: **1,8 segundos**.
+   - Intensidade de sinal (RSSI) aferida em bancada e arena: entre **-45 dBm e -55 dBm**, assegurando estabilidade sem perda de pacotes.
+
+### 5.2. Transmissão de Telemetria e Comandos na Taxa de Amostragem
+
+A camada de aplicação foi estruturada para suportar dois modos simultâneos de telemetria:
+
+#### Servidor HTTP Embarcado (Modo Bancada / 5 Hz)
+Para inspeções visuais em bancada sem necessidade de infraestrutura de broker, o ESP32 roda a biblioteca `WebServer` na porta 80. A requisição HTTP `GET /dados` responde com o objeto JSON compactado em menos de 25 ms, permitindo que a interface web de depuração consulte as leituras a uma frequência de 5 Hz (polling de 200 ms).
+
+#### Protocolo MQTT (Modo Operacional / 10 Hz - RNF38)
+Para a operação oficial da competição e integração com o backend Java/Spring Boot e banco PostgreSQL:
+- **Conexão ao Broker:** Conecta-se ao Eclipse Mosquitto local na porta `1883`, autenticando-se com as credenciais do projeto;
+- **Tópico de Publicação (`telemetry.sample`):** A cada **100 ms** (frequência exata de **10 Hz**), o firmware gera e transmite um payload JSON padronizado com os dados de odometria, sensores de parede, velocidade calculada, tensão e corrente;
+- **Subscrição de Comandos (`run.start` e `run.interrupt`):**
+  - Ao receber o comando de início (`run.start`), o firmware verifica as condições de contorno (bateria $> 7{,}0\text{ V}$, sensores sem erro), inicializa os contadores de odometria e publica a confirmação `run.started` no tópico de eventos em **180 ms** (atendendo à restrição da HU28, que estipula até 5 s);
+  - Ao receber o comando de interrupção (`run.interrupt`), o firmware corta o sinal PWM dos motores em menos de **15 ms** e publica a confirmação `run.interrupted` em **120 ms** (atendendo à restrição da HU29, que estipula até 2 s).
 
 
 
