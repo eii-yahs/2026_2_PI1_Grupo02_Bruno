@@ -4,7 +4,7 @@
 
 #### 1. Processamento (ESP32 — `ESP_WROOM_32`)
 
-Esta etapa teve como objetivo validar o funcionamento básico do microcontrolador **ESP32 (`ESP_WROOM_32`)**, garantindo a comunicação com o ambiente de desenvolvimento, a gravação correta do *firmware* em memória *flash*, a estabilidade da alimentação lógica (`5 V` no pino `VIN` proveniente do regulador integrado do módulo `L298N` e `3,3 V` regulados internamente, conforme `RNF16`) e a execução autônoma do ciclo de controle embarcado (`RF10`, `RNF30`).
+Esta etapa teve como objetivo validar o funcionamento básico do microcontrolador **ESP32 (`ESP_WROOM_32`)**, garantindo a comunicação com o ambiente de desenvolvimento, a gravação correta do *firmware* em memória *flash*, a estabilidade da alimentação lógica (`5 V` no pino `VIN` proveniente do regulador `LM7805`) e a execução autônoma do ciclo de controle embarcado (`RF10`, `RNF30`).
 
 #### 1.1. Definição da Interface de Desenvolvimento
 
@@ -82,16 +82,16 @@ A execução do código de teste embarcado permitiu validar, de forma integrada,
 3. **Três Módulos de Sensores Infravermelhos de Proximidade (`IR1`, `IR2` e `IR3`):**
    Validados nos pinos `GPIO36` (esquerdo), `GPIO39` (frontal) e `GPIO34` (direito), confirmando a alimentação em `3,3 V`, a resposta analógica proporcional à proximidade dos obstáculos e a correta classificação lógica de presença de parede a partir do limiar calibrado (`LIMITE_PAREDE = 1500`).
 
-4. **Driver de Motor de Ponte H Dupla (`L298N`):**
-   Validado o controle lógico de sentido de rotação pelas portas `IN1` (`GPIO16`), `IN2` (`GPIO17`), `IN3` (`GPIO18`) e `IN4` (`GPIO19`), a modulação de potência pelos pinos de habilitação `ENA` (`GPIO4`) e `ENB` (`GPIO2`), a parada por desenergização (PWM zero) e o funcionamento do regulador linear de `5 V` integrado à placa `L298N`, responsável por alimentar o pino `VIN` do ESP32.
+4. **Driver de Motor de Ponte H Mini (`MX1508`):**
+   Validado o controle lógico de sentido de rotação pelas portas `IN1` (`GPIO16`), `IN2` (`GPIO17`), `IN3` (`GPIO18`) e `IN4` (`GPIO19`), a parada por desenergização (PWM zero).
 
-5. **Dois Motores DC N20 com Caixa de Redução (Tração Esquerda e Direita):**
+6. **Dois Motores DC N20 com Caixa de Redução (Tração Esquerda e Direita):**
    Validado o acionamento elétrico reversível de ambos os motores em malha fechada, incluindo deslocamento para frente, paradas, curvas de 90° para a direita e para a esquerda e manobra de meia-volta (180°) em becos sem saída.
 
-6. **Encoders Incrementais de Quadratura Integrados aos Motores (`U4` e `U5`):**
+7. **Encoders Incrementais de Quadratura Integrados aos Motores (`U4` e `U5`):**
    Validados os canais A e B do encoder esquerdo (`GPIO32` e `GPIO33`) e do encoder direito (`GPIO25` e `GPIO26`), comprovando a contagem diferencial de pulsos (`ticksE` e `ticksD`), a identificação do sentido de giro e o uso do *feedback* odométrico para corrigir desvios em linha reta e encerrar giros exatamente ao atingir as metas de pulsos (`TICKS_90 = 330` e `TICKS_AVANCO = 250`).
 
-7. **Subsistema de Alimentação, Chave Geral e Capacitores de Filtro:**
+8. **Subsistema de Alimentação, Chave Geral e Capacitores de Filtro:**
    Validada a operação conjunta da bateria LiPo 2S (`7,4 V` nominais), da chave mecânica de isolamento (`SW1`) e dos capacitores de desacoplamento (`100 µF`, `10 µF` e `100 nF`), garantindo que os picos de corrente durante partidas e reversões dos motores não provocassem quedas de tensão críticas nem reinicializações (*brownout*) no ESP32 com o rádio Wi-Fi ativo.
 
 
@@ -441,7 +441,7 @@ Como possibilidade de desenvolvimento futuro, poderá ser implementado o armazen
 
 # **4. Atuadores**
 
-Os atuadores são dois motores DC N20 com caixa de redução e *encoder* de quadratura, acionados pela ponte H dupla L298N. O ESP32 define o sentido de giro pelas entradas IN1 a IN4 e a velocidade pelo PWM nos pinos de habilitação ENA e ENB.
+Os atuadores são dois motores DC N20 com caixa de redução e *encoder* de quadratura, acionados pela mini ponte H MX1508. O ESP32 define o sentido de giro pelas entradas IN1 a IN4 e a velocidade pelo PWM nos pinos de habilitação ENA e ENB.
 
 | Motor | Sentido | Velocidade (PWM) | *Encoder* (A / B) |
 | :---- | :---- | :---- | :---- |
@@ -456,12 +456,12 @@ Fonte: Elaborado pelos autores (2026).
 
 **Requisitos associados:** [RF11](http://requisitos.md#rf11) e [RF33](http://requisitos.md#rf33).
 
-Cada motor foi acionado nos três estados da L298N:
+Cada motor foi acionado nos três estados da MX1508:
 
-| IN1 / IN2 (IN3 / IN4) | ENA (ENB) | Resultado |
+| IN1 / IN2 (IN3 / IN4) | Resultado |
 | :---: | :---: | :---- |
-| Alto / baixo | PWM | Motor gira para frente |
-| Baixo / alto | PWM | Motor gira para trás |
+| Alto / baixo | Motor gira para frente |
+| Baixo / alto | Motor gira para trás |
 | Qualquer | 0 | Motor desenergizado (parada) |
 
 *Tabela 12 – Estados de acionamento dos motores.*
